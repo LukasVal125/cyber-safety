@@ -4,139 +4,231 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome</title>
+  <title>Cyber Safety Demo</title>
+
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light dark;
+      --bg: light-dark(#f3f6fb, #080b12);
+      --panel: light-dark(#ffffff, #111722);
+      --text: light-dark(#172033, #edf2fa);
+      --muted: light-dark(#667085, #9aa7ba);
+      --line: light-dark(#dfe5ee, #283243);
+      --blue: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      margin: 0; min-height: 100vh;
-      display: grid; place-items: center; padding: 20px;
+      margin: 0;
+      min-height: 100vh;
       font-family: Arial, sans-serif;
-      background: #080d18; color: #f1f5f9;
+      background: var(--bg);
+      color: var(--text);
     }
+
+    #app {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
     .card {
-      width: min(100%, 430px); padding: 32px;
-      border: 1px solid #263449; border-radius: 20px;
-      background: #111a29;
+      width: min(100%, 430px);
+      padding: 32px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px #00000014;
     }
+
     .mark {
-      display: grid; place-items: center;
-      width: 46px; height: 46px; border-radius: 14px;
-      background: #1d3155; color: #60a5fa;
-      font-size: 23px; font-weight: bold; margin-bottom: 24px;
+      width: 44px;
+      height: 44px;
+      margin-bottom: 24px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: light-dark(#eaf0ff, #17274a);
+      color: var(--blue);
+      font-size: 22px;
+      font-weight: bold;
     }
-    h1 { font-size: 30px; margin: 0 0 12px; }
-    p { color: #a9b7ca; line-height: 1.6; }
-    label { display: block; margin: 18px 0 7px; font-size: 14px; }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 28px;
+    }
+
+    .sub {
+      margin-bottom: 26px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    label {
+      display: block;
+      margin: 16px 0 7px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
     input {
-      width: 100%; padding: 13px; border-radius: 9px;
-      border: 1px solid #34445b; background: #0b1220;
-      color: white; font-size: 16px;
+      width: 100%;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
     }
+
     button {
-      width: 100%; padding: 14px; margin-top: 22px;
-      border: 0; border-radius: 9px; background: #2563eb;
-      color: white; font-size: 16px; font-weight: bold;
+      width: 100%;
+      margin-top: 22px;
+      padding: 14px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--blue);
+      color: white;
+      font: inherit;
+      font-weight: bold;
       cursor: pointer;
     }
-    .fine { text-align: center; font-size: 12px; }
-    .alert { text-align: center; }
-    .red { color: #ff4655; }
-    .status {
-      display: inline-block; margin-top: 20px; padding: 10px;
-      border: 1px solid #71323a; border-radius: 8px;
-      color: #ff737b; font-size: 12px;
+
+    .fine {
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.5;
     }
-    .again {
-      max-width: 220px; background: transparent;
-      border: 1px solid #34445b;
+
+    .alert {
+      width: min(100%, 700px);
+      text-align: center;
+    }
+
+    .alert-icon {
+      margin: 20px 0;
+      color: #ff343f;
+      font-size: 58px;
+    }
+
+    .eyebrow {
+      color: #ff5962;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 3px;
+    }
+
+    .alert h1 {
+      color: #ff343f;
+      font-size: clamp(34px, 7vw, 64px);
+    }
+
+    .alert p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .status {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 10px 14px;
+      border: 1px solid #71323a;
+      border-radius: 8px;
+      color: #ff737b;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 25px;
+      }
     }
   </style>
 </head>
+
 <body>
   <main id="app">
     <section class="card">
       <div class="mark">W</div>
+
       <h1>Welcome!</h1>
-      <p>Please enter your details to continue.</p>
+      <p class="sub">
+        Please enter your details to continue.
+      </p>
+
       <form id="details-form" autocomplete="off">
         <label for="first">First name</label>
-        <input id="first" maxlength="60" required>
+        <input
+          id="first"
+          name="first"
+          placeholder="Enter your first name"
+          maxlength="60"
+          required
+        >
+
         <label for="last">Last name</label>
-        <input id="last" maxlength="60" required>
+        <input
+          id="last"
+          name="last"
+          placeholder="Enter your last name"
+          maxlength="60"
+          required
+        >
+
         <button type="submit">Continue</button>
       </form>
-      <p class="fine">Cyber Safety Demonstration</p>
+
+      <p class="fine">
+        Cyber Safety Awareness Demonstration
+      </p>
     </section>
   </main>
 
   <script>
-    const app = document.getElementById('app');
-    const defaults = {
-      waitSeconds: 30,
-      enabled: true,
-      eyebrow: 'CYBER SECURITY ALERT',
-      headline: "YOU'VE BEEN HACKED!",
-      detail: 'UNAUTHORIZED ACCESS DETECTED'
-    };
+    const app = document.getElementById("app");
+    const form = document.getElementById("details-form");
 
-    function getSettings() {
-      try {
-        return {
-          ...defaults,
-          ...JSON.parse(localStorage.getItem('cyberDemoSettings') || '{}')
-        };
-      } catch {
-        return { ...defaults };
-      }
-    }
-
-    document.getElementById('details-form').addEventListener('submit', event => {
+    form.addEventListener("submit", function(event) {
       event.preventDefault();
-      const settings = getSettings();
 
-      if (!settings.enabled) {
-        alert('The demonstration is currently disabled.');
-        return;
-      }
-
-      // Names are not saved or sent anywhere.
-      document.getElementById('first').value = '';
-      document.getElementById('last').value = '';
+      // Names are not sent or saved.
+      document.getElementById("first").value = "";
+      document.getElementById("last").value = "";
 
       app.innerHTML = `
         <section class="card" style="text-align:center">
           <div class="mark" style="margin:0 auto 24px">✓</div>
           <h1>Thank you!</h1>
-          <p>Your page is ready. Please wait...</p>
-        </section>`;
+          <p class="sub">Your page is ready. Please wait...</p>
+          <p class="fine">Loading</p>
+        </section>
+      `;
 
-      setTimeout(() => {
-        const latest = getSettings();
-
+      window.setTimeout(function() {
         app.innerHTML = `
           <section class="alert">
-            <p class="red">${escapeHTML(latest.eyebrow)}</p>
-            <div style="font-size:56px">⚠</div>
-            <h1 class="red">${escapeHTML(latest.headline)}</h1>
-            <p>${escapeHTML(latest.detail)}</p>
-            <div class="status">SIMULATED SECURITY ALERT</div>
-            <p>This is a cybersecurity awareness demonstration.</p>
-            <button class="again" onclick="location.reload()">
-              Restart demo
-            </button>
-          </section>`;
-      }, Math.max(1, Math.min(300, Number(settings.waitSeconds) || 30)) * 1000);
+            <div class="eyebrow">CYBER SECURITY ALERT</div>
+            <div class="alert-icon">⚠</div>
+            <h1>YOU'VE BEEN HACKED!</h1>
+            <p>SIMULATED UNAUTHORIZED ACCESS ALERT</p>
+            <div class="status">
+              SIMULATED SECURITY ALERT
+            </div>
+            <p>
+              This is a cybersecurity awareness demonstration.
+              No device has been hacked.
+            </p>
+          </section>
+        `;
+      }, 30000);
     });
-
-    function escapeHTML(value) {
-      return String(value).replace(/[&<>"']/g, char => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      })[char]);
-    }
   </script>
 </body>
 </html>
