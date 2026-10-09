@@ -6,343 +6,84 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cyber Safety Demo</title>
 <style>
-:root {
-  color-scheme: light dark;
-  --bg: light-dark(#f3f6fb,#080b12);
-  --panel: light-dark(#fff,#111722);
-  --text: light-dark(#172033,#edf2fa);
-  --muted: light-dark(#667085,#9aa7ba);
-  --line: light-dark(#dfe5ee,#283243);
-  --blue: #2563eb;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0; padding: 24px; min-height: 100vh;
-  font-family: system-ui, sans-serif;
-  background: var(--bg); color: var(--text);
-}
-#app {
-  min-height: 90vh; display: grid;
-  place-items: center;
-}
-.card, .panel {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: 16px; padding: 26px;
-}
-.card { width: min(100%, 430px); }
-.admin { width: min(100%, 1000px); margin: auto; }
-.grid {
-  display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
-  gap: 16px;
-}
-h1 { font-size: 28px; }
-h2 { font-size: 18px; }
-p, .muted { color: var(--muted); line-height: 1.5; }
-label { display: block; margin: 16px 0 7px; font-size: 14px; }
-input {
-  display: block; width: 100%; padding: 12px;
-  border-radius: 9px; border: 1px solid var(--line);
-  background: var(--bg); color: var(--text); font: inherit;
-}
-button {
-  padding: 12px 15px; margin-top: 14px;
-  border: 0; border-radius: 9px; cursor: pointer;
-  background: var(--blue); color: white;
-  font: inherit; font-weight: 700;
-}
-button.danger { background: #c62828; }
-button.secondary {
-  background: transparent; border: 1px solid var(--line);
-  color: var(--text);
-}
-.full { width: 100%; }
-.small { font-size: 12px; }
-.visitor {
-  border: 1px solid var(--line); border-radius: 12px;
-  padding: 14px; margin: 12px 0;
-}
-.alert { text-align: center; }
-.alert h1 { color: #ff343f; font-size: clamp(32px,7vw,60px); }
-@media(max-width:480px) { body { padding: 12px; } }
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#0b1020;color:#eef2ff;font-family:Arial,sans-serif}
+.card{width:min(100%,440px);padding:30px;background:#151d31;border:1px solid #2b3854;border-radius:18px}
+.logo{width:44px;height:44px;display:grid;place-items:center;background:#263b68;color:#93b5ff;border-radius:12px;font-weight:bold;font-size:22px}
+h1{font-size:28px;margin:22px 0 10px}
+p{color:#b5c1d8;line-height:1.55}
+label{display:block;margin:18px 0 7px;font-size:14px}
+input{width:100%;padding:13px;border:1px solid #394760;border-radius:9px;background:#0c1324;color:white;font:inherit}
+button{width:100%;padding:13px;margin-top:20px;border:0;border-radius:9px;background:#3478f6;color:white;font-weight:bold;font-size:15px;cursor:pointer}
+.small{text-align:center;font-size:12px;margin-top:18px}
+.alert{text-align:center;width:min(100%,750px)}
+.alert h1{color:#ff4658;font-size:clamp(36px,8vw,64px)}
+.alert-icon{font-size:56px;color:#ff4658}
+.status{display:inline-block;border:1px solid #a63748;padding:10px 14px;border-radius:8px;color:#ff8995;font-size:12px;margin-top:20px}
 </style>
 </head>
 <body>
-<main id="app"></main>
-
+<main id="app">
+<section class="card">
+<div class="logo">W</div>
+<h1>Welcome!</h1>
+<p>Enter your details to continue.</p>
+<form id="visitor-form">
+<label for="first">First name</label>
+<input id="first" maxlength="60" required autocomplete="given-name">
+<label for="last">Last name</label>
+<input id="last" maxlength="60" required autocomplete="family-name">
+<button type="submit">Continue</button>
+</form>
+<p class="small">Cybersecurity demonstration. Your name is saved in this browser for demonstration purposes. Do not enter sensitive information.</p>
+</section>
+</main>
 <script>
-const app = document.getElementById("app");
-
-const DEFAULTS = {
-  enabled: true,
-  waitSeconds: 30,
-  eyebrow: "CYBER SECURITY ALERT",
-  headline: "YOU'VE BEEN HACKED!",
-  detail: "UNAUTHORIZED ACCESS DETECTED"
+const app = document.getElementById('app');
+const defaults = {
+  enabled:true,
+  waitSeconds:30,
+  eyebrow:'CYBER SECURITY ALERT',
+  headline:"YOU'VE BEEN HACKED!",
+  detail:'UNAUTHORIZED ACCESS DETECTED'
 };
-
-let settings = { ...DEFAULTS };
-let visitors = [];
-
-try {
-  settings = {
-    ...DEFAULTS,
-    ...JSON.parse(sessionStorage.getItem("demoSettings") || "{}")
-  };
-  visitors = JSON.parse(localStorage.getItem("demoVisitors") || "[]");
-} catch (error) {
-  visitors = [];
+function read(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch { return fallback; }
 }
-
-function saveSettings() {
-  sessionStorage.setItem("demoSettings", JSON.stringify(settings));
+function getSettings() {
+  return {...defaults, ...read('cyberDemoSettings', {})};
 }
-
-function saveVisitors() {
-  localStorage.setItem("demoVisitors", JSON.stringify(visitors));
-}
-
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
-}
-
-function isAdmin() {
-  return /\/admin\/?$/.test(location.pathname);
-}
-
-function showWelcome() {
-  app.innerHTML = `
-    <section class="card">
-      <h1>Welcome!</h1>
-      <p>Įvesk vardą ir pavardę, kad tęstum demonstraciją.</p>
-      <p class="small">
-        Tai kibernetinio saugumo demonstracija.
-        Paspaudus Continue, įvestas vardas ir pavardė
-        bus išsaugoti šioje naršyklėje demonstracijos tikslu.
-        Nevesk jautrios informacijos.
-      </p>
-      <form id="visitorForm">
-        <label for="first">Vardas</label>
-        <input id="first" maxlength="60" required>
-        <label for="last">Pavardė</label>
-        <input id="last" maxlength="60" required>
-        <button class="full" type="submit">Continue</button>
-      </form>
-    </section>`;
-
-  document.getElementById("visitorForm").addEventListener("submit", event => {
-    event.preventDefault();
-
-    if (!settings.enabled) {
-      alert("Demonstracija šiuo metu išjungta.");
-      return;
-    }
-
-    const first = document.getElementById("first").value.trim();
-    const last = document.getElementById("last").value.trim();
-
-    if (!first || !last) return;
-
-    visitors.push({
-      id: crypto.randomUUID(),
-      name: first + " " + last,
-      time: new Date().toLocaleString()
-    });
-
-    try {
-      saveVisitors();
-    } catch (error) {
-      alert("Nepavyko išsaugoti įrašo šioje naršyklėje.");
-      return;
-    }
-
-    app.innerHTML = `
-      <section class="card" style="text-align:center">
-        <h1>Ačiū!</h1>
-        <p>Vyksta saugumo demonstracija...</p>
-      </section>`;
-
-    setTimeout(showAlert, settings.waitSeconds * 1000);
-  });
-}
-
-function showAlert() {
-  app.innerHTML = `
-    <section class="alert">
-      <p>${escapeHTML(settings.eyebrow)}</p>
-      <h1>${escapeHTML(settings.headline)}</h1>
-      <p>${escapeHTML(settings.detail)}</p>
-      <p>SIMULATED SECURITY ALERT</p>
-    </section>`;
-}
-
-function showAdminLogin() {
-  app.innerHTML = `
-    <section class="card">
-      <h1>Admin prisijungimas</h1>
-      <p>Prisijunk, kad galėtum valdyti demonstraciją.</p>
-      <form id="loginForm">
-        <label for="password">Slaptažodis</label>
-        <input id="password" type="password" required>
-        <button class="full" type="submit">Prisijungti</button>
-      </form>
-      <p class="small">
-        Demonstracinis prisijungimas nėra tikra apsauga.
-      </p>
-    </section>`;
-
-  document.getElementById("loginForm").addEventListener("submit", event => {
-    event.preventDefault();
-
-    if (document.getElementById("password").value !== "demo123") {
-      alert("Neteisingas slaptažodis.");
-      return;
-    }
-
-    sessionStorage.setItem("demoAdmin", "yes");
-    showAdmin();
-  });
-}
-
-function showAdmin() {
-  if (sessionStorage.getItem("demoAdmin") !== "yes") {
-    showAdminLogin();
+document.getElementById('visitor-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const settings = getSettings();
+  if (!settings.enabled) {
+    alert('Demonstration is currently disabled by the administrator.');
     return;
   }
+  const first = document.getElementById('first').value.trim();
+  const last = document.getElementById('last').value.trim();
+  if (!first || !last) return;
 
-  app.innerHTML = `
-    <section class="admin">
-      <h1>Cyber Safety — Admin</h1>
-      <p>Nustatymai ir lankytojų įrašai</p>
-
-      <div class="grid">
-        <section class="panel">
-          <h2>Demonstracijos valdymas</h2>
-          <p>Būsena: <strong>${settings.enabled ? "Įjungta" : "Išjungta"}</strong></p>
-          <button id="toggle" class="secondary">Keisti būseną</button>
-          <label for="wait">Laukimo laikas sekundėmis</label>
-          <input id="wait" type="number" min="1" max="300"
-            value="${settings.waitSeconds}">
-          <button id="saveWait">Išsaugoti laiką</button>
-        </section>
-
-        <section class="panel">
-          <h2>Įspėjimo teksto redagavimas</h2>
-          <label for="eyebrow">Viršutinė antraštė</label>
-          <input id="eyebrow" maxlength="70"
-            value="${escapeHTML(settings.eyebrow)}">
-          <label for="headline">Pagrindinis tekstas</label>
-          <input id="headline" maxlength="100"
-            value="${escapeHTML(settings.headline)}">
-          <label for="detail">Papildomas tekstas</label>
-          <input id="detail" maxlength="120"
-            value="${escapeHTML(settings.detail)}">
-          <button id="confirmChanges">Patvirtinti pakeitimus</button>
-          <p id="saveMessage" class="small"></p>
-        </section>
-      </div>
-
-      <section class="panel" style="margin-top:16px">
-        <h2>Prisijungę žmonės</h2>
-        <p>
-          Čia rodomi tik šio įrenginio naršyklėje išsaugoti
-          demonstracijos įrašai.
-        </p>
-        <div id="visitorWindow" class="panel">
-          <p>Įrašų dar nėra. Langas užpildomas, kai lankytojas
-          pateikia formą šioje naršyklėje.</p>
-        </div>
-        <button id="deleteAll" class="danger">Ištrinti visus įrašus</button>
-      </section>
-
-      <p class="small">
-        GitHub Pages neturi bendros duomenų bazės šiame kode.
-        Kitų įrenginių lankytojai čia nebus matomi.
-        Slaptažodis yra tik demonstracinis.
-      </p>
-      <button id="logout" class="secondary">Atsijungti</button>
-      <p><a href="/">Grįžti į pagrindinį puslapį</a></p>
-    </section>`;
-
-  document.getElementById("toggle").onclick = () => {
-    settings.enabled = !settings.enabled;
-    saveSettings();
-    showAdmin();
-  };
-
-  document.getElementById("saveWait").onclick = () => {
-    const value = Number(document.getElementById("wait").value);
-
-    if (!Number.isInteger(value) || value < 1 || value > 300) {
-      alert("Įvesk skaičių nuo 1 iki 300.");
-      return;
-    }
-
-    settings.waitSeconds = value;
-    saveSettings();
-    showAdmin();
-  };
-
-  document.getElementById("confirmChanges").onclick = () => {
-    settings.eyebrow =
-      document.getElementById("eyebrow").value.trim() || DEFAULTS.eyebrow;
-    settings.headline =
-      document.getElementById("headline").value.trim() || DEFAULTS.headline;
-    settings.detail =
-      document.getElementById("detail").value.trim() || DEFAULTS.detail;
-
-    saveSettings();
-    document.getElementById("saveMessage").textContent =
-      "Pakeitimai patvirtinti šioje naršyklės sesijoje.";
-  };
-
-  const visitorWindow = document.getElementById("visitorWindow");
-
-  if (visitors.length === 0) {
-    visitorWindow.innerHTML = "<p>Įrašų nėra.</p>";
-  } else {
-    visitorWindow.innerHTML = visitors.map(visitor => `
-      <article class="visitor">
-        <strong>${escapeHTML(visitor.name)}</strong>
-        <p class="small">Pateikta: ${escapeHTML(visitor.time)}</p>
-        <button class="danger" data-delete="${escapeHTML(visitor.id)}">
-          Ištrinti
-        </button>
-      </article>
-    `).join("");
-  }
-
-  visitorWindow.querySelectorAll("[data-delete]").forEach(button => {
-    button.onclick = () => {
-      visitors = visitors.filter(item => item.id !== button.dataset.delete);
-      saveVisitors();
-      showAdmin();
-    };
+  const visitors = read('cyberDemoVisitors', []);
+  visitors.push({
+    name:first + ' ' + last,
+    time:new Date().toLocaleString()
   });
+  localStorage.setItem('cyberDemoVisitors', JSON.stringify(visitors));
 
-  document.getElementById("deleteAll").onclick = () => {
-    if (!confirm("Ar tikrai ištrinti visus šiuos įrašus?")) return;
-    visitors = [];
-    saveVisitors();
-    showAdmin();
-  };
+  app.innerHTML = '<section class="card" style="text-align:center"><div class="logo" style="margin:auto">✓</div><h1>Thank you!</h1><p>Please wait while the demonstration continues...</p></section>';
 
-  document.getElementById("logout").onclick = () => {
-    sessionStorage.removeItem("demoAdmin");
-    showAdminLogin();
-  };
-}
-
-if (isAdmin()) {
-  showAdmin();
-} else {
-  showWelcome();
-}
+  window.setTimeout(() => {
+    const s = getSettings();
+    app.innerHTML = '<section class="alert"><p style="letter-spacing:3px;color:#ff8995;font-weight:bold" id="eyebrow"></p><div class="alert-icon">⚠</div><h1 id="headline"></h1><p id="detail"></p><div class="status">SIMULATED SECURITY ALERT — DEMO ONLY</div></section>';
+    document.getElementById('eyebrow').textContent = s.eyebrow;
+    document.getElementById('headline').textContent = s.headline;
+    document.getElementById('detail').textContent = s.detail;
+  }, Math.max(1, Math.min(300, Number(settings.waitSeconds) || 30)) * 1000);
+});
 </script>
 </body>
 </html>
