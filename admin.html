@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cyber Safety – Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px; min-height: 100vh;
+      background: #0b1120; color: #eef2ff;
+      font-family: Arial, sans-serif;
+    }
+    main { max-width: 760px; margin: 35px auto; }
+    .panel {
+      background: #141e31; border: 1px solid #2b3b55;
+      border-radius: 16px; padding: 24px; margin-bottom: 18px;
+    }
+    h1 { margin-top: 0; }
+    p { color: #b8c5d9; line-height: 1.5; }
+    label { display: block; margin: 16px 0 7px; }
+    input {
+      display: block; width: 100%; padding: 12px;
+      border-radius: 8px; border: 1px solid #40516c;
+      background: #0b1120; color: white; font-size: 16px;
+    }
+    button {
+      padding: 12px 16px; border: 0; border-radius: 8px;
+      background: #3478f6; color: white; font-weight: bold;
+      cursor: pointer; margin: 12px 8px 0 0;
+    }
+    .secondary { background: #344256; }
+    .danger { background: #a83242; }
+    .hidden { display: none; }
+    .note { font-size: 13px; }
+    a { color: #80adff; }
+    #message { color: #8ee6b0; }
+  </style>
+</head>
+<body>
+<main>
+  <section class="panel" id="login">
+    <h1>Admin login</h1>
+    <p>Cyber Safety Demonstration</p>
+    <label for="password">Demonstracinis slaptažodis</label>
+    <input id="password" type="password" placeholder="Įvesk slaptažodį">
+    <button id="login-button">Prisijungti</button>
+    <p class="note">Tai tik demonstracinis prisijungimas, o ne tikra apsauga.</p>
+  </section>
+
+  <div id="dashboard" class="hidden">
+    <section class="panel">
+      <h1>Administratoriaus skydelis</h1>
+      <p>Čia gali keisti viešosios demonstracijos nustatymus.</p>
+      <p><a href="./index.html">Atidaryti viešąją svetainę</a></p>
+      <button id="logout" class="secondary">Atsijungti</button>
+    </section>
+
+    <section class="panel">
+      <h2>Demonstracijos valdymas</h2>
+      <p id="state"></p>
+      <button id="toggle">Įjungti / išjungti</button>
+      <label for="wait">Laukimo laikas sekundėmis (1–300)</label>
+      <input id="wait" type="number" min="1" max="300">
+    </section>
+
+    <section class="panel">
+      <h2>Įspėjimo tekstai</h2>
+      <label for="eyebrow">Viršutinė antraštė</label>
+      <input id="eyebrow" maxlength="70">
+      <label for="headline">Pagrindinis tekstas</label>
+      <input id="headline" maxlength="100">
+      <label for="detail">Papildomas tekstas</label>
+      <input id="detail" maxlength="120">
+      <button id="save">Išsaugoti nustatymus</button>
+      <p id="message" role="status"></p>
+    </section>
+    <p class="note">Nustatymai išsaugomi šios naršyklės vietinėje atmintyje. Jie automatiškai nesinchronizuojami į kitus įrenginius.</p>
+  </div>
+</main>
+
+<script>
+  const DEMO_PASSWORD = 'demo123';
+  const defaults = {
+    waitSeconds: 30,
+    enabled: true,
+    eyebrow: 'CYBER SECURITY ALERT',
+    headline: "YOU'VE BEEN HACKED!",
+    detail: 'UNAUTHORIZED ACCESS DETECTED'
+  };
+
+  const login = document.getElementById('login');
+  const dashboard = document.getElementById('dashboard');
+  const password = document.getElementById('password');
+
+  function loadSettings() {
+    try {
+      return {
+        ...defaults,
+        ...JSON.parse(localStorage.getItem('cyberDemoSettings') || '{}')
+      };
+    } catch {
+      return { ...defaults };
+    }
+  }
+
+  let settings = loadSettings();
+
+  function refresh() {
+    document.getElementById('state').textContent =
+      settings.enabled ? 'Būsena: ĮJUNGTA' : 'Būsena: IŠJUNGTA';
+    document.getElementById('wait').value = settings.waitSeconds;
+    document.getElementById('eyebrow').value = settings.eyebrow;
+    document.getElementById('headline').value = settings.headline;
+    document.getElementById('detail').value = settings.detail;
+  }
+
+  document.getElementById('login-button').addEventListener('click', () => {
+    if (password.value !== DEMO_PASSWORD) {
+      alert('Neteisingas slaptažodis.');
+      return;
+    }
+    login.classList.add('hidden');
+    dashboard.classList.remove('hidden');
+    refresh();
+  });
+
+  password.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      document.getElementById('login-button').click();
+    }
+  });
+
+  document.getElementById('logout').addEventListener('click', () => {
+    dashboard.classList.add('hidden');
+    login.classList.remove('hidden');
+    password.value = '';
+  });
+
+  document.getElementById('toggle').addEventListener('click', () => {
+    settings.enabled = !settings.enabled;
+    localStorage.setItem('cyberDemoSettings', JSON.stringify(settings));
+    refresh();
+  });
+
+  document.getElementById('save').addEventListener('click', () => {
+    const wait = Number(document.getElementById('wait').value);
+    if (!Number.isInteger(wait) || wait < 1 || wait > 300) {
+      alert('Laukimo laikas turi būti nuo 1 iki 300 sekundžių.');
+      return;
+    }
+
+    settings.waitSeconds = wait;
+    settings.eyebrow = document.getElementById('eyebrow').value.trim() || defaults.eyebrow;
+    settings.headline = document.getElementById('headline').value.trim() || defaults.headline;
+    settings.detail = document.getElementById('detail').value.trim() || defaults.detail;
+
+    localStorage.setItem('cyberDemoSettings', JSON.stringify(settings));
+    document.getElementById('message').textContent = 'Nustatymai išsaugoti!';
+    refresh();
+  });
+</script>
+</body>
+</html>
