@@ -2,72 +2,536 @@
 <!DOCTYPE html>
 <html lang="lt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> </title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Safety</title>
 
-    <style>
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
-            background: white;
-        }
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        .container {
-            width: 300px;
-        }
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-        label {
-            display: block;
-            margin: 15px 0 6px;
-        }
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
-        }
+    body {
+      background: #090909;
+      color: white;
+    }
 
-        button {
-            width: 100%;
-            margin-top: 20px;
-            padding: 12px;
-            background: #222;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-    </style>
+    .hidden {
+      display: none !important;
+    }
+
+    /* PRADINIS PUSLAPIS */
+
+    #startPage {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      background: #090909;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 390px;
+      text-align: center;
+    }
+
+    .shield {
+      font-size: 55px;
+      margin-bottom: 12px;
+    }
+
+    .login-card h1 {
+      font-size: 30px;
+      letter-spacing: 3px;
+      margin: 0 0 12px;
+    }
+
+    .login-card p {
+      color: #aaa;
+      margin-bottom: 28px;
+    }
+
+    .login-card input {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 14px;
+      color: white;
+      background: #171717;
+      border: 1px solid #333;
+      border-radius: 7px;
+      outline: none;
+    }
+
+    .login-card input:focus {
+      border-color: #2585ff;
+    }
+
+    .primary-button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 7px;
+      background: #1877f2;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .primary-button:hover {
+      background: #0866d6;
+    }
+
+    .primary-button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    #formError {
+      color: #ff5555;
+      margin: 0 0 12px;
+      font-size: 14px;
+    }
+
+    /* STRAIPSNIO PUSLAPIS */
+
+    #articlePage {
+      min-height: 100vh;
+      background: #fff;
+      color: #202122;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .wiki-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 5%;
+      border-bottom: 1px solid #a2a9b1;
+    }
+
+    .wiki-logo {
+      font-size: 29px;
+    }
+
+    .wiki-brand {
+      font-family: Georgia, serif;
+      font-size: 24px;
+    }
+
+    .wiki-search {
+      margin-left: auto;
+      width: min(300px, 45%);
+      padding: 10px;
+      border: 1px solid #a2a9b1;
+      background: white;
+      color: #202122;
+    }
+
+    .wiki-layout {
+      display: grid;
+      grid-template-columns: 190px minmax(0, 760px);
+      gap: 35px;
+      max-width: 1150px;
+      margin: 35px auto;
+      padding: 0 24px;
+    }
+
+    .wiki-contents {
+      border-right: 1px solid #eaecf0;
+      padding-right: 20px;
+      font-size: 14px;
+      line-height: 2;
+    }
+
+    .wiki-contents strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .wiki-article h1 {
+      font-family: Georgia, serif;
+      font-size: 34px;
+      font-weight: normal;
+      border-bottom: 1px solid #a2a9b1;
+      padding-bottom: 10px;
+      margin-top: 0;
+    }
+
+    .wiki-article h2 {
+      font-family: Georgia, serif;
+      font-weight: normal;
+      border-bottom: 1px solid #a2a9b1;
+      padding-bottom: 6px;
+      margin-top: 30px;
+    }
+
+    .wiki-article p {
+      line-height: 1.8;
+    }
+
+    .wiki-subtitle {
+      color: #54595d;
+      font-size: 13px;
+    }
+
+    .wiki-link {
+      color: #36c;
+    }
+
+    @media (max-width: 650px) {
+      .wiki-layout {
+        grid-template-columns: 1fr;
+        margin-top: 22px;
+      }
+
+      .wiki-contents {
+        border-right: none;
+        border-bottom: 1px solid #eaecf0;
+        padding-bottom: 15px;
+      }
+
+      .wiki-article h1 {
+        font-size: 28px;
+      }
+
+      .wiki-brand {
+        font-size: 20px;
+      }
+    }
+
+    /* SENASIS ALERT DIZAINAS */
+
+    #alertPage {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: auto;
+      background: #000;
+      color: #ff2020;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 24px;
+      gap: 24px;
+    }
+
+    #alertPage h1 {
+      margin: 0;
+      color: #ff2020;
+      font-size: clamp(42px, 8vw, 76px);
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    #alertPage h2 {
+      margin: 0;
+      color: #ff2020;
+      font-size: clamp(28px, 5vw, 52px);
+      line-height: 1.3;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+  </style>
 </head>
+
 <body>
 
-    <div class="container">
-        <form id="loginForm">
-            <label for="vardas">Vardas</label>
-            <input type="text" id="vardas" required>
+  <!-- PRADINIS PUSLAPIS -->
 
-            <label for="pavarde">Pavardė</label>
-            <input type="text" id="pavarde" required>
+  <main id="startPage">
+    <form class="login-card" id="visitorForm">
+      <div class="shield">🛡️</div>
 
-            <button type="submit">Tęsti</button>
-        </form>
+      <h1>CYBER SAFETY</h1>
+      <p>Welcome. Enter your details to continue.</p>
+
+      <input
+        id="firstName"
+        type="text"
+        placeholder="Vardas"
+        autocomplete="given-name"
+        maxlength="80"
+        required
+      >
+
+      <input
+        id="lastName"
+        type="text"
+        placeholder="Pavardė"
+        autocomplete="family-name"
+        maxlength="80"
+        required
+      >
+
+      <p id="formError" class="hidden" role="alert"></p>
+
+      <button
+        class="primary-button"
+        id="continueButton"
+        type="submit"
+      >
+        Tęsti
+      </button>
+    </form>
+  </main>
+
+  <!-- STRAIPSNIO PUSLAPIS -->
+
+  <main id="articlePage" class="hidden">
+    <header class="wiki-header">
+      <span class="wiki-logo">🌐</span>
+      <span class="wiki-brand">Wikipedia</span>
+
+      <input
+        class="wiki-search"
+        type="search"
+        placeholder="Search Wikipedia"
+        aria-label="Search"
+      >
+    </header>
+
+    <div class="wiki-layout">
+      <aside class="wiki-contents">
+        <strong>Contents</strong>
+        <div>1. Overview</div>
+        <div>2. Common threats</div>
+        <div>3. Password security</div>
+        <div>4. Phishing</div>
+      </aside>
+
+      <article class="wiki-article">
+        <h1>Cybersecurity</h1>
+
+        <p class="wiki-subtitle">
+          From a Wikipedia-inspired educational article
+        </p>
+
+        <p>
+          <strong>Cybersecurity</strong> is the practice of protecting
+          computers, networks and digital information from unauthorized
+          access, misuse and online threats.
+        </p>
+
+        <h2>Overview</h2>
+        <p>
+          Digital security is important for individuals, businesses
+          and organizations. Safe online habits can help reduce risks
+          when using the internet.
+        </p>
+
+        <h2>Common threats</h2>
+        <p>
+          Common threats include malicious software, suspicious links,
+          stolen passwords and attempts to access accounts without
+          permission.
+        </p>
+
+        <h2>Password security</h2>
+        <p>
+          Strong, unique passwords and two-factor authentication help
+          protect online accounts. Passwords should never be shared
+          with strangers.
+        </p>
+
+        <h2>Phishing</h2>
+        <p>
+          Phishing is a technique in which a message or website tries
+          to trick someone into sharing private information. Check
+          links carefully before opening them.
+        </p>
+
+        <p class="wiki-link">
+          Learn more about online safety and protecting personal data.
+        </p>
+      </article>
     </div>
+  </main>
 
-    <script>
-        document.getElementById("loginForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            alert("You hacked");
-        });
-    </script>
+  <!-- ALERT: DU UŽRAŠAI TIK PO VIENĄ KARTĄ -->
+
+  <section id="alertPage" class="hidden" aria-live="assertive">
+    <h1 id="alertHeadline">Alert!!</h1>
+    <h2 id="alertDetail">you are hacked!!</h2>
+  </section>
+
+  <script>
+    // SUPABASE KONFIGŪRACIJA
+
+    const SUPABASE_URL =
+      "https://wupmkjuttnjxszkejviz.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_fJwyIIamC8-w_kM-LEPzKg_cAxPiy2X";
+
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    const startPage = document.getElementById("startPage");
+    const articlePage = document.getElementById("articlePage");
+    const alertPage = document.getElementById("alertPage");
+
+    const visitorForm = document.getElementById("visitorForm");
+    const continueButton = document.getElementById("continueButton");
+    const formError = document.getElementById("formError");
+
+    const alertHeadline = document.getElementById("alertHeadline");
+    const alertDetail = document.getElementById("alertDetail");
+
+    let alertTimer = null;
+
+    // ADMINISTRATORIAUS NUSTATYMAI
+
+    async function loadSettings() {
+      const { data, error } = await supabaseClient
+        .from("demo_settings")
+        .select("enabled, wait_seconds, eyebrow, headline, detail")
+        .eq("id", 1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Nustatymų nuskaitymo klaida:", error);
+
+        return {
+          enabled: true,
+          wait_seconds: 30,
+          headline: "Alert!!",
+          detail: "you are hacked!!"
+        };
+      }
+
+      if (!data) {
+        return {
+          enabled: true,
+          wait_seconds: 30,
+          headline: "Alert!!",
+          detail: "you are hacked!!"
+        };
+      }
+
+      return data;
+    }
+
+    // PARODOME ALERT
+
+    function showAlert(settings) {
+      const headline =
+        typeof settings.headline === "string" &&
+        settings.headline.trim()
+          ? settings.headline.trim()
+          : "Alert!!";
+
+      const detail =
+        typeof settings.detail === "string" &&
+        settings.detail.trim()
+          ? settings.detail.trim()
+          : "you are hacked!!";
+
+      alertHeadline.textContent = headline;
+      alertDetail.textContent = detail;
+
+      startPage.classList.add("hidden");
+      articlePage.classList.add("hidden");
+      alertPage.classList.remove("hidden");
+
+      document.title = headline;
+    }
+
+    // LANKYTOJO FORMA
+
+    visitorForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const first = document
+        .getElementById("firstName")
+        .value.trim();
+
+      const last = document
+        .getElementById("lastName")
+        .value.trim();
+
+      if (!first || !last) {
+        formError.textContent = "Įrašyk vardą ir pavardę.";
+        formError.classList.remove("hidden");
+        return;
+      }
+
+      const fullName = `${first} ${last}`.trim();
+
+      continueButton.disabled = true;
+      continueButton.textContent = "Prašome palaukti...";
+      formError.classList.add("hidden");
+
+      try {
+        // Išsaugome lankytojo vardą ir pavardę.
+
+        const { error: insertError } = await supabaseClient
+          .from("visitor_entries")
+          .insert({
+            visitor_name: fullName
+          });
+
+        if (insertError) {
+          console.error("Lankytojo įrašymo klaida:", insertError);
+
+          throw new Error(
+            "Nepavyko išsaugoti duomenų. Bandyk dar kartą."
+          );
+        }
+
+        // Nuskaitome nustatymus iš admin puslapio.
+
+        const settings = await loadSettings();
+
+        startPage.classList.add("hidden");
+        articlePage.classList.remove("hidden");
+
+        document.title = "Cybersecurity";
+
+        // Laukimo laikas nustatomas administratoriaus puslapyje.
+
+        if (settings.enabled !== false) {
+          const seconds = Number(settings.wait_seconds);
+
+          const safeSeconds =
+            Number.isFinite(seconds) && seconds >= 0
+              ? Math.min(seconds, 300)
+              : 30;
+
+          alertTimer = setTimeout(function () {
+            showAlert(settings);
+          }, safeSeconds * 1000);
+        }
+
+      } catch (error) {
+        formError.textContent =
+          error.message || "Įvyko klaida. Bandyk dar kartą.";
+
+        formError.classList.remove("hidden");
+
+        continueButton.disabled = false;
+        continueButton.textContent = "Tęsti";
+      }
+    });
+  </script>
 
 </body>
 </html>
