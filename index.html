@@ -2,182 +2,175 @@
 <!DOCTYPE html>
 <html lang="lt">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cyber Safety Demo</title>
-<style>
-:root{color-scheme:light dark;--bg:light-dark(#f3f6fb,#080b12);--panel:light-dark(#fff,#111722);--text:light-dark(#172033,#edf2fa);--muted:light-dark(#667085,#9aa7ba);--line:light-dark(#dfe5ee,#283243);--blue:#2563eb}
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-#app{min-height:100vh;display:grid;place-items:center;padding:24px}
-.card{width:min(100%,430px);padding:32px;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:0 20px 60px #00000014}
-.mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:light-dark(#eaf0ff,#17274a);color:var(--blue);font-size:22px;font-weight:800;margin-bottom:24px}
-h1{font-size:28px;letter-spacing:-.5px;margin:0 0 12px}
-.sub{color:var(--muted);line-height:1.55;margin:0 0 24px}
-label{display:block;font-size:13px;font-weight:650;margin:16px 0 7px}
-input{width:100%;padding:13px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit}
-button{width:100%;margin-top:22px;padding:14px;border:0;border-radius:10px;background:var(--blue);color:white;font:inherit;font-weight:700;cursor:pointer}
-button:disabled{opacity:.6;cursor:wait}
-.fine{font-size:12px;color:var(--muted);text-align:center;margin-top:17px}
-.alert{width:min(100%,700px);text-align:center}
-.alert h1{color:#ff343f;font-size:clamp(34px,7vw,64px)}
-.alert p{color:var(--muted);line-height:1.6}
-.status{display:inline-block;margin-top:20px;border:1px solid #71323a;color:#ff737b;padding:10px 14px;border-radius:8px;font-size:12px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cyber Safety Demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 20px;
+      display: grid; place-items: center;
+      font-family: Arial, sans-serif;
+      background: #0b1120; color: #f1f5f9;
+    }
+    .card {
+      width: 100%; max-width: 440px; padding: 30px;
+      background: #151e30; border: 1px solid #334155;
+      border-radius: 18px;
+    }
+    h1 { margin-top: 0; }
+    p { line-height: 1.6; color: #cbd5e1; }
+    label { display: block; margin: 16px 0 7px; }
+    input {
+      width: 100%; padding: 12px; border-radius: 8px;
+      border: 1px solid #475569; background: #0b1120;
+      color: white; font-size: 16px;
+    }
+    button {
+      width: 100%; padding: 13px; margin-top: 20px;
+      border: 0; border-radius: 8px;
+      background: #2563eb; color: white;
+      font-size: 16px; font-weight: bold; cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    #message { overflow-wrap: anywhere; }
+    .alert { color: #f87171; }
+    .success { color: #86efac; }
+    .small { font-size: 12px; color: #94a3b8; }
+  </style>
 </head>
 <body>
-<main id="app">
-<section class="card">
-<div class="mark">W</div>
-<h1>Welcome!</h1>
-<p class="sub">Tai kibernetinio saugumo demonstracija.</p>
-<form id="details-form" autocomplete="off">
-<label for="first">First name</label>
-<input id="first" name="first" placeholder="Enter your first name" maxlength="60" required>
-<label for="last">Last name</label>
-<input id="last" name="last" placeholder="Enter your last name" maxlength="60" required>
-<button type="submit">Continue</button>
-</form>
-<p class="fine">Tik mokomoji demonstracija. Nevesk slaptažodžių ar jautrios informacijos.</p>
-</section>
-</main>
+  <main class="card">
+    <h1>Cyber Safety</h1>
+    <p>
+      Tai mokomoji kibernetinio saugumo demonstracija.
+      Naudok tik demonstracijai skirtą vardą.
+    </p>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const SUPABASE_URL='https://wupmkjuttnjsxzkejviz.supabase.co';
-const SUPABASE_KEY='sb_publishable_fJwyIIamC8-w_kM-LEPzKg_cAxPiy2X';
+    <form id="visitor-form">
+      <label for="first">Vardas</label>
+      <input id="first" maxlength="60" required>
 
-const app=document.getElementById('app');
-const form=document.getElementById('details-form');
-const defaults={
-  enabled:true,
-  wait_seconds:30,
-  eyebrow:'CYBER SECURITY ALERT',
-  headline:"YOU'VE BEEN HACKED!",
-  detail:'UNAUTHORIZED ACCESS DETECTED'
-};
+      <label for="last">Pavardė</label>
+      <input id="last" maxlength="60" required>
 
-let settings={...defaults};
-let client;
-let busy=false;
+      <button id="submit-button" type="submit">
+        Tęsti
+      </button>
+    </form>
 
-function escapeHTML(value){
-  return String(value??'').replace(/[&<>"']/g,c=>({
-    '&':'&amp;','<':'&lt;','>':'&gt;',
-    '"':'&quot;',"'":'&#39;'
-  })[c]);
-}
+    <p id="message" role="status" aria-live="polite"></p>
+    <p class="small">
+      Mokomoji demonstracija. Neįvesk slaptažodžių
+      ar kitos jautrios informacijos.
+    </p>
+  </main>
 
-async function start(){
-  if(!window.supabase){
-    throw new Error('Supabase biblioteka neįkelta.');
-  }
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL =
+      'https://wupmkjuttnjxszkejviz.supabase.co';
 
-  client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    const SUPABASE_KEY =
+      'sb_publishable_fJwyIIamC8-w_kM-LEPzKg_cAxPiy2X';
 
-  const {data,error}=await client
-    .from('demo_settings')
-    .select('enabled,wait_seconds,eyebrow,headline,detail')
-    .eq('id',1)
-    .maybeSingle();
+    const form = document.getElementById('visitor-form');
+    const button = document.getElementById('submit-button');
+    const message = document.getElementById('message');
 
-  if(error) throw error;
+    function showMessage(text, type = '') {
+      message.textContent = text;
+      message.className = type;
+    }
 
-  if(data) settings={...defaults,...data};
+    async function start() {
+      if (!window.supabase) {
+        showMessage(
+          'Nepavyko įkelti Supabase bibliotekos. Patikrink internetą.',
+          'alert'
+        );
+        button.disabled = true;
+        return;
+      }
 
-  if(!settings.enabled){
-    showDisabled();
-    return;
-  }
+      const client = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
 
-  form.addEventListener('submit',submitVisitor);
-}
+      try {
+        const { data, error } = await client
+          .from('demo_settings')
+          .select('enabled, wait_seconds, eyebrow, headline, detail')
+          .eq('id', 1)
+          .maybeSingle();
 
-function showDisabled(){
-  app.innerHTML=`
-    <section class="card">
-      <div class="mark">i</div>
-      <h1>Demonstracija išjungta</h1>
-      <p class="sub">Šiuo metu demonstracija nepasiekiama.</p>
-    </section>`;
-}
+        if (error) throw error;
 
-async function submitVisitor(event){
-  event.preventDefault();
-  if(busy) return;
+        if (!data) {
+          throw new Error(
+            'Nerasta demo_settings eilutė, kurios id = 1.'
+          );
+        }
 
-  if(!settings.enabled){
-    showDisabled();
-    return;
-  }
+        if (!data.enabled) {
+          button.disabled = true;
+          showMessage('Demonstracija šiuo metu išjungta.');
+        }
+      } catch (error) {
+        console.error('Supabase nustatymų klaida:', error);
+        showMessage(
+          'Nepavyko prisijungti prie demonstracijos nustatymų. ' +
+          'Išsami klaida pateikta naršyklės Console.',
+          'alert'
+        );
+      }
 
-  const first=document.getElementById('first').value.trim();
-  const last=document.getElementById('last').value.trim();
-  const fullName=(first+' '+last).trim();
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        showMessage('');
 
-  if(!first||!last||fullName.length>120){
-    alert('Patikrink įvestus duomenis.');
-    return;
-  }
+        if (button.disabled) return;
 
-  busy=true;
-  const button=form.querySelector('button');
-  button.disabled=true;
-  button.textContent='Siunčiama…';
+        const first = document.getElementById('first').value.trim();
+        const last = document.getElementById('last').value.trim();
+        const fullName = `${first} ${last}`.trim();
 
-  try{
-    const {error}=await client
-      .from('visitor_entries')
-      .insert({visitor_name:fullName});
+        if (!first || !last || fullName.length > 120) {
+          showMessage('Patikrink įvestus duomenis.', 'alert');
+          return;
+        }
 
-    if(error) throw error;
+        button.disabled = true;
+        button.textContent = 'Siunčiama…';
 
-    app.innerHTML=`
-      <section class="card" style="text-align:center">
-        <div class="mark" style="margin:0 auto 24px">✓</div>
-        <h1>Ačiū!</h1>
-        <p class="sub">Tai mokomoji demonstracija. Tuoj pasirodys įspėjimas.</p>
-        <p class="fine">Įrašas išsaugotas.</p>
-      </section>`;
+        try {
+          const { error } = await client
+            .from('visitor_entries')
+            .insert({ visitor_name: fullName });
 
-    const delay=Math.max(
-      1,Math.min(300,Number(settings.wait_seconds)||30)
-    )*1000;
+          if (error) throw error;
 
-    window.setTimeout(showAlert,delay);
-  }catch(error){
-    console.error(error);
-    busy=false;
-    button.disabled=false;
-    button.textContent='Continue';
-    alert('Nepavyko išsaugoti įrašo. Patikrink Supabase lentelę ir RLS taisykles.');
-  }
-}
+          form.hidden = true;
+          showMessage(
+            'Įrašas išsaugotas. Tai mokomoji demonstracija; ' +
+            'tavo įrenginys nebuvo nulaužtas.',
+            'success'
+          );
+        } catch (error) {
+          console.error('Įrašo išsaugojimo klaida:', error);
+          showMessage(
+            'Įrašo išsaugoti nepavyko. Patikrink lentelę ' +
+            'visitor_entries ir jos RLS leidimus.',
+            'alert'
+          );
+          button.disabled = false;
+          button.textContent = 'Tęsti';
+        }
+      });
+    }
 
-function showAlert(){
-  app.innerHTML=`
-    <section class="alert">
-      <p>${escapeHTML(settings.eyebrow)}</p>
-      <div style="font-size:58px;color:#ff343f">▣</div>
-      <h1>${escapeHTML(settings.headline)}</h1>
-      <p>${escapeHTML(settings.detail)}</p>
-      <div class="status">SIMULATED SECURITY ALERT</div>
-      <p>Tai tik demonstracija – tavo įrenginys nebuvo nulaužtas.</p>
-      <button id="again" style="max-width:220px">Bandyti dar kartą</button>
-    </section>`;
-
-  document.getElementById('again').onclick=()=>location.reload();
-}
-
-start().catch(error=>{
-  console.error(error);
-  app.innerHTML=`
-    <section class="card">
-      <h1>Ryšio klaida</h1>
-      <p class="sub">Nepavyko įkelti demonstracijos nustatymų. Patikrink interneto ryšį, Supabase lenteles ir RLS taisykles.</p>
-      <button onclick="location.reload()">Bandyti dar kartą</button>
-    </section>`;
-});
-</script>
+    start();
+  </script>
 </body>
 </html>
