@@ -33,16 +33,33 @@ a{color:#93c5fd}
   <p>Administratoriaus valdymo skydelis.</p>
 
   <section id="login-panel" class="panel">
-    <h2>Prisijungimas</h2>
+    <h2 id="login-title">Prisijungimas</h2>
+    <p id="login-description">Prisijunk prie administratoriaus paskyros.</p>
+
     <form id="login-form">
       <label for="email">Administratoriaus el. paštas</label>
       <input id="email" type="email" autocomplete="username" required>
-      <label for="password">Slaptažodis</label>
-      <input id="password" type="password" autocomplete="current-password" required>
-      <button id="login-button">Prisijungti</button>
+
+      <div id="login-password-area">
+        <label for="password">Slaptažodis</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+      </div>
+
+      <div id="new-password-area" hidden>
+        <label for="new-password">Naujas slaptažodis</label>
+        <input id="new-password" type="password" minlength="10" autocomplete="new-password">
+
+        <label for="confirm-password">Pakartok naują slaptažodį</label>
+        <input id="confirm-password" type="password" minlength="10" autocomplete="new-password">
+      </div>
+
+      <button id="login-button" type="submit">Prisijungti</button>
     </form>
+
+    <button id="forgot-password" class="secondary" type="button">Pamiršau slaptažodį</button>
+    <button id="back-to-login" class="secondary" type="button" hidden>Grįžti į prisijungimą</button>
     <p id="login-message" role="status"></p>
-    <small>Prisijungti gali tik administratoriaus paskyra.</small>
+    <small>Administratoriaus paskyra apsaugota „Supabase Auth“.</small>
   </section>
 
   <section id="dashboard" hidden>
@@ -79,25 +96,6 @@ a{color:#93c5fd}
     </section>
 
     <section class="panel">
-      <h2>Keisti administratoriaus slaptažodį</h2>
-      <p>Įvesk naują slaptažodį ir pakartok jį patvirtinimui.</p>
-      <form id="change-password-form">
-        <label for="new-password">Naujas slaptažodis</label>
-        <input id="new-password" type="password"
-          autocomplete="new-password" minlength="10"
-          placeholder="Mažiausiai 10 simbolių" required>
-        <label for="confirm-password">Pakartok naują slaptažodį</label>
-        <input id="confirm-password" type="password"
-          autocomplete="new-password" minlength="10"
-          placeholder="Įvesk slaptažodį dar kartą" required>
-        <button id="change-password-button" type="submit">
-          Pakeisti slaptažodį
-        </button>
-        <p id="password-message" role="status"></p>
-      </form>
-    </section>
-
-    <section class="panel">
       <h2>Lankytojų įrašai</h2>
       <p id="count"></p>
       <div id="entries"></div>
@@ -125,6 +123,7 @@ const defaults = {
 let settings = {...defaults};
 let client;
 let entries = [];
+let recoveryMode = false;
 
 function message(text, error = false) {
   $('message').textContent = text;
@@ -136,9 +135,30 @@ function loginMessage(text, error = false) {
   $('login-message').className = error ? 'error' : 'status';
 }
 
-function passwordMessage(text, error = false) {
-  $('password-message').textContent = text;
-  $('password-message').className = error ? 'error' : 'status';
+function setRecoveryMode(enabled) {
+  recoveryMode = enabled;
+
+  $('login-title').textContent = enabled
+    ? 'Naujo slaptažodžio nustatymas'
+    : 'Prisijungimas';
+
+  $('login-description').textContent = enabled
+    ? 'Įvesk naują slaptažodį du kartus.'
+    : 'Prisijunk prie administratoriaus paskyros.';
+
+  $('login-password-area').hidden = enabled;
+  $('new-password-area').hidden = !enabled;
+  $('password').required = !enabled;
+  $('new-password').required = enabled;
+  $('confirm-password').required = enabled;
+  $('forgot-password').hidden = enabled;
+  $('back-to-login').hidden = !enabled;
+
+  $('login-button').textContent = enabled
+    ? 'Išsaugoti naują slaptažodį'
+    : 'Prisijungti';
+
+  loginMessage('');
 }
 
 function showLogin() {
@@ -276,17 +296,67 @@ async function deleteEntry(id) {
 
 $('login-form').addEventListener('submit', async event => {
   event.preventDefault();
-  $('login-button').disabled = true;
-  loginMessage('Jungiamasi…');
+
+  const button = $('login-button');
+  button.disabled = true;
 
   try {
+    if (recoveryMode) {
+      const newPassword = $('new-password').value;
+      const confirmPassword = $('confirm-password').value;
+
+      if (newPassword.length < 10) {
+        loginMessage('Slaptažodis turi būti bent 10 simbolių.', true);
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        loginMessage('Slaptažodžiai nesutampa.', true);
+        return;
+      }
+
+      loginMessage('Saugomas naujas slaptažodis…');
+
+      const {data: userData, error: userError} =
+        await client.auth.getUser();
+
+      if (userError || userData.user?.id !== ADMIN_UID) {
+        loginMessage(
+          'Atkūrimo nuoroda negalioja arba jos galiojimas baigėsi. Paprašyk naujos.',
+          true
+        );
+        return;
+      }
+
+      const {error} = await client.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        loginMessage('Pakeisti nepavyko: ' + error.message, true);
+        return;
+      }
+
+      $('new-password').value = '';
+      $('confirm-password').value = '';
+
+      await client.auth.signOut();
+      history.replaceState(null, '', window.location.pathname);
+      setRecoveryMode(false);
+      showLogin();
+      loginMessage('Slaptažodis pakeistas! Prisijunk su naujuoju.');
+      return;
+    }
+
+    loginMessage('Jungiamasi…');
+
     const {error} = await client.auth.signInWithPassword({
       email: $('email').value.trim(),
       password: $('password').value
     });
 
     if (error) {
-      loginMessage('Prisijungti nepavyko: ' + error.message, true);
+      loginMessage('Prisijungti nepavyko. Patikrink el. paštą ir slaptažodį.', true);
       return;
     }
 
@@ -295,57 +365,53 @@ $('login-form').addEventListener('submit', async event => {
       await loadData();
     }
   } catch (error) {
-    loginMessage('Klaida: ' + error.message, true);
-  } finally {
-    $('login-button').disabled = false;
-  }
-});
-
-$('change-password-form').addEventListener('submit', async event => {
-  event.preventDefault();
-
-  const newPassword = $('new-password').value;
-  const confirmPassword = $('confirm-password').value;
-  const button = $('change-password-button');
-
-  if (newPassword.length < 10) {
-    passwordMessage('Slaptažodis turi būti bent 10 simbolių.', true);
-    return;
-  }
-
-  if (newPassword !== confirmPassword) {
-    passwordMessage('Slaptažodžiai nesutampa.', true);
-    return;
-  }
-
-  button.disabled = true;
-  passwordMessage('Keičiamas slaptažodis…');
-
-  try {
-    if (!(await verifyAdmin())) return;
-
-    const {data, error} = await client.auth.updateUser({
-      password: newPassword
-    });
-
-    if (error) {
-      passwordMessage('Pakeisti nepavyko: ' + error.message, true);
-      return;
-    }
-
-    if (data.user?.id !== ADMIN_UID) {
-      passwordMessage('Nepavyko patvirtinti administratoriaus paskyros.', true);
-      return;
-    }
-
-    $('new-password').value = '';
-    $('confirm-password').value = '';
-    passwordMessage('Slaptažodis sėkmingai pakeistas.');
-  } catch (error) {
-    passwordMessage('Klaida: ' + error.message, true);
+    loginMessage('Įvyko klaida: ' + error.message, true);
   } finally {
     button.disabled = false;
   }
+});
+
+$('forgot-password').addEventListener('click', async () => {
+  const email = $('email').value.trim();
+
+  if (!email) {
+    loginMessage('Pirmiausia įrašyk administratoriaus el. paštą.', true);
+    $('email').focus();
+    return;
+  }
+
+  const button = $('forgot-password');
+  button.disabled = true;
+  loginMessage('Siunčiama atkūrimo nuoroda…');
+
+  try {
+    const redirectTo = window.location.origin +
+      window.location.pathname + '?reset=1';
+
+    const {error} = await client.auth.resetPasswordForEmail(email, {
+      redirectTo
+    });
+
+    if (error) {
+      loginMessage('Laiško išsiųsti nepavyko: ' + error.message, true);
+      return;
+    }
+
+    loginMessage(
+      'Jei paskyra egzistuoja, patikrink el. paštą ir šlamšto aplanką.'
+    );
+  } catch (error) {
+    loginMessage('Klaida: ' + error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$('back-to-login').addEventListener('click', async () => {
+  await client.auth.signOut();
+  history.replaceState(null, '', window.location.pathname);
+  setRecoveryMode(false);
+  showLogin();
 });
 
 $('toggle').addEventListener('click', async () => {
@@ -391,7 +457,28 @@ async function start() {
 
   client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const {data} = await client.auth.getSession();
+  const url = new URL(window.location.href);
+  const isResetLink = url.searchParams.get('reset') === '1';
+
+  client.auth.onAuthStateChange(event => {
+    if (event === 'PASSWORD_RECOVERY') {
+      setRecoveryMode(true);
+      showLogin();
+    }
+  });
+
+  const {data, error} = await client.auth.getSession();
+
+  if (error) {
+    loginMessage('Nepavyko patikrinti sesijos. Atnaujink puslapį.', true);
+    return;
+  }
+
+  if (isResetLink) {
+    setRecoveryMode(true);
+    showLogin();
+    return;
+  }
 
   if (data.session && await verifyAdmin()) {
     showDashboard();
@@ -399,10 +486,6 @@ async function start() {
   } else {
     showLogin();
   }
-
-  client.auth.onAuthStateChange((_event, session) => {
-    if (!session) showLogin();
-  });
 }
 
 start().catch(error => {
