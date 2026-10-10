@@ -2,496 +2,515 @@
 <!DOCTYPE html>
 <html lang="lt">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cyber Safety – Admin</title>
-<style>
-:root{color-scheme:dark;font-family:Arial,sans-serif}
-*{box-sizing:border-box}
-body{margin:0;background:#0b1120;color:#f1f5f9;padding:24px}
-main{max-width:1000px;margin:auto}
-.panel{background:#151e30;border:1px solid #334155;border-radius:14px;padding:22px;margin:16px 0}
-h1,h2{margin-top:0}
-p{color:#cbd5e1;line-height:1.5}
-input{display:block;width:100%;padding:12px;margin:8px 0 14px;border:1px solid #475569;border-radius:8px;background:#0b1120;color:white}
-button{padding:11px 15px;border:0;border-radius:8px;background:#2563eb;color:white;cursor:pointer;margin:4px}
-button:disabled{opacity:.5}
-.danger{background:#b91c1c}
-.secondary{background:#334155}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
-.entry{padding:14px;border:1px solid #334155;border-radius:10px;margin:10px 0;overflow-wrap:anywhere}
-.status{color:#86efac}
-.error{color:#fca5a5}
-small{color:#94a3b8}
-a{color:#93c5fd}
-[hidden]{display:none!important}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Safety – Administravimas</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080b12;
+      --panel: #111722;
+      --text: #edf2fa;
+      --muted: #9aa7ba;
+      --line: #283243;
+      --blue: #2563eb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px; min-height: 100vh;
+      background: var(--bg); color: var(--text);
+      font-family: system-ui, Arial, sans-serif;
+    }
+    #app { width: min(100%, 980px); margin: 40px auto; }
+    .card, .panel {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 16px; padding: 24px;
+    }
+    .card { max-width: 440px; margin: 40px auto; }
+    h1 { font-size: 27px; margin: 12px 0; }
+    h2 { font-size: 17px; margin-top: 0; }
+    p { color: var(--muted); line-height: 1.55; }
+    label { display: block; margin: 16px 0 7px; font-size: 14px; }
+    input {
+      display: block; width: 100%; padding: 12px;
+      border: 1px solid var(--line); border-radius: 9px;
+      background: var(--bg); color: var(--text); font: inherit;
+    }
+    button {
+      padding: 12px 15px; border: 0; border-radius: 9px;
+      background: var(--blue); color: white; font: inherit;
+      font-weight: 650; cursor: pointer; margin-top: 12px;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    .full { width: 100%; }
+    .secondary { background: transparent; border: 1px solid var(--line); }
+    .link {
+      background: none; border: none; color: #8ab4ff;
+      padding: 4px 0; text-decoration: underline;
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit,minmax(230px,1fr));
+      gap: 16px;
+    }
+    .wide { grid-column: 1 / -1; }
+    .message { overflow-wrap: anywhere; font-size: 14px; }
+    .ok { color: #75e0a7; }
+    .error { color: #ff8585; }
+    .visitor {
+      border: 1px solid var(--line); border-radius: 10px;
+      padding: 12px; margin: 10px 0;
+    }
+    .top {
+      display: flex; justify-content: space-between;
+      align-items: center; gap: 12px; flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .hidden { display: none !important; }
+    @media (max-width: 480px) { body { padding: 12px; } }
+  </style>
 </head>
 <body>
-<main>
-  <h1>Cyber Safety – Admin</h1>
-  <p>Administratoriaus valdymo skydelis.</p>
-
-  <section id="login-panel" class="panel">
-    <h2 id="login-title">Prisijungimas</h2>
-    <p id="login-description">Prisijunk prie administratoriaus paskyros.</p>
-
-    <form id="login-form">
-      <label for="email">Administratoriaus el. paštas</label>
-      <input id="email" type="email" autocomplete="username" required>
-
-      <div id="login-password-area">
-        <label for="password">Slaptažodis</label>
-        <input id="password" type="password" autocomplete="current-password" required>
-      </div>
-
-      <div id="new-password-area" hidden>
-        <label for="new-password">Naujas slaptažodis</label>
-        <input id="new-password" type="password" minlength="10" autocomplete="new-password">
-
-        <label for="confirm-password">Pakartok naują slaptažodį</label>
-        <input id="confirm-password" type="password" minlength="10" autocomplete="new-password">
-      </div>
-
-      <button id="login-button" type="submit">Prisijungti</button>
-    </form>
-
-    <button id="forgot-password" class="secondary" type="button">Pamiršau slaptažodį</button>
-    <button id="back-to-login" class="secondary" type="button" hidden>Grįžti į prisijungimą</button>
-    <p id="login-message" role="status"></p>
-    <small>Administratoriaus paskyra apsaugota „Supabase Auth“.</small>
-  </section>
-
-  <section id="dashboard" hidden>
-    <div class="panel">
-      <button id="refresh" type="button">Atnaujinti duomenis</button>
-      <button id="logout" class="secondary" type="button">Atsijungti</button>
-      <p id="message" role="status"></p>
-    </div>
-
-    <div class="grid">
-      <section class="panel">
-        <h2>Demonstracijos būsena</h2>
-        <p id="state"></p>
-        <button id="toggle" type="button">Įjungti / išjungti</button>
-      </section>
-
-      <section class="panel">
-        <h2>Laukimo laikas</h2>
-        <label for="wait">Sekundės (1–300)</label>
-        <input id="wait" type="number" min="1" max="300" value="30">
-        <button id="save-wait" type="button">Išsaugoti laiką</button>
-      </section>
-    </div>
-
-    <section class="panel">
-      <h2>Įspėjimo tekstai</h2>
-      <label for="eyebrow">Viršutinė antraštė</label>
-      <input id="eyebrow" maxlength="70">
-      <label for="headline">Pagrindinė antraštė</label>
-      <input id="headline" maxlength="100">
-      <label for="detail">Papildomas tekstas</label>
-      <input id="detail" maxlength="120">
-      <button id="save-text" type="button">Išsaugoti tekstus</button>
-    </section>
-
-    <section class="panel">
-      <h2>Lankytojų įrašai</h2>
-      <p id="count"></p>
-      <div id="entries"></div>
-    </section>
+<main id="app">
+  <section class="card">
+    <h1>Įkeliama…</h1>
+    <p>Palaukite.</p>
   </section>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = 'https://wupmkjuttnjsxzkejviz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_fJwyIIamC8-w_kM-LEPzKg_cAxPiy2X';
-const ADMIN_UID = 'fa9fb1f4-9380-4a10-b354-dde6795a3f2a';
+(() => {
+  // Tavo projekto nustatymai
+  const SUPABASE_URL =
+    'https://wupmkjuttnjxszkejviz.supabase.co';
 
-const $ = id => document.getElementById(id);
+  const SUPABASE_KEY =
+    'sb_publishable_fJwyIIamC8-w_kM-LEPzKg_cAxPiy2X';
 
-const defaults = {
-  id: 1,
-  enabled: true,
-  wait_seconds: 30,
-  eyebrow: 'CYBER SECURITY ALERT',
-  headline: "YOU'VE BEEN HACKED!",
-  detail: 'UNAUTHORIZED ACCESS DETECTED'
-};
+  const ADMIN_UID =
+    'fa9fb1f4-9380-4a10-b354-dde6795a3f2a';
 
-let settings = {...defaults};
-let client;
-let entries = [];
-let recoveryMode = false;
+  const app = document.getElementById('app');
+  const params = new URLSearchParams(location.search);
+  const resetRequested = params.get('reset') === '1';
 
-function message(text, error = false) {
-  $('message').textContent = text;
-  $('message').className = error ? 'error' : 'status';
-}
+  let client;
+  let settings = {
+    id: 1,
+    enabled: true,
+    wait_seconds: 30,
+    eyebrow: 'CYBER SECURITY ALERT',
+    headline: "YOU'VE BEEN HACKED!",
+    detail: 'UNAUTHORIZED ACCESS DETECTED'
+  };
 
-function loginMessage(text, error = false) {
-  $('login-message').textContent = text;
-  $('login-message').className = error ? 'error' : 'status';
-}
-
-function setRecoveryMode(enabled) {
-  recoveryMode = enabled;
-
-  $('login-title').textContent = enabled
-    ? 'Naujo slaptažodžio nustatymas'
-    : 'Prisijungimas';
-
-  $('login-description').textContent = enabled
-    ? 'Įvesk naują slaptažodį du kartus.'
-    : 'Prisijunk prie administratoriaus paskyros.';
-
-  $('login-password-area').hidden = enabled;
-  $('new-password-area').hidden = !enabled;
-  $('password').required = !enabled;
-  $('new-password').required = enabled;
-  $('confirm-password').required = enabled;
-  $('forgot-password').hidden = enabled;
-  $('back-to-login').hidden = !enabled;
-
-  $('login-button').textContent = enabled
-    ? 'Išsaugoti naują slaptažodį'
-    : 'Prisijungti';
-
-  loginMessage('');
-}
-
-function showLogin() {
-  $('login-panel').hidden = false;
-  $('dashboard').hidden = true;
-}
-
-function showDashboard() {
-  $('login-panel').hidden = true;
-  $('dashboard').hidden = false;
-}
-
-async function verifyAdmin() {
-  const {data, error} = await client.auth.getUser();
-
-  if (error || data.user?.id !== ADMIN_UID) {
-    await client.auth.signOut();
-    showLogin();
-    loginMessage('Ši paskyra neturi administratoriaus teisių.', true);
-    return false;
+  function escapeHTML(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
-  return true;
-}
-
-async function loadData() {
-  message('Kraunami duomenys…');
-
-  const {data: config, error: configError} = await client
-    .from('demo_settings')
-    .select('*')
-    .eq('id', 1)
-    .maybeSingle();
-
-  if (configError) {
-    message('Nustatymų nuskaityti nepavyko: ' + configError.message, true);
-    return;
+  function showMessage(text, type = '') {
+    const el = document.getElementById('message');
+    if (!el) return;
+    el.className = 'message ' + type;
+    el.textContent = text;
   }
 
-  if (!config) {
-    message('Nerasta demo_settings eilutė su id = 1.', true);
-    return;
+  function showError(error, fallback) {
+    console.error(fallback, error);
+    showMessage(
+      fallback + (error?.message ? ' Detalė: ' + error.message : ''),
+      'error'
+    );
   }
 
-  settings = {...defaults, ...config};
-  $('state').textContent = settings.enabled ? 'ĮJUNGTA' : 'IŠJUNGTA';
-  $('wait').value = settings.wait_seconds;
-  $('eyebrow').value = settings.eyebrow;
-  $('headline').value = settings.headline;
-  $('detail').value = settings.detail;
-
-  const {data, error} = await client
-    .from('visitor_entries')
-    .select('id, visitor_name, created_at')
-    .order('created_at', {ascending: false})
-    .limit(500);
-
-  if (error) {
-    message('Įrašų nuskaityti nepavyko: ' + error.message, true);
-    return;
+  function loading(text) {
+    app.innerHTML = '<section class="card"><h1>' +
+      escapeHTML(text) + '</h1><p>Palaukite…</p></section>';
   }
 
-  entries = data || [];
-  renderEntries();
-  message('Duomenys atnaujinti.');
-}
-
-function renderEntries() {
-  $('count').textContent = 'Rodoma įrašų: ' + entries.length +
-    (entries.length === 500 ? ' (naujausi 500)' : '');
-
-  const container = $('entries');
-  container.replaceChildren();
-
-  if (!entries.length) {
-    container.textContent = 'Įrašų dar nėra.';
-    return;
+  async function getAdminUser() {
+    const { data, error } = await client.auth.getUser();
+    if (error) return null;
+    if (data.user?.id !== ADMIN_UID) return null;
+    return data.user;
   }
 
-  for (const entry of entries) {
-    const box = document.createElement('div');
-    box.className = 'entry';
+  function renderLogin() {
+    app.innerHTML = `
+      <section class="card">
+        <h1>Administratoriaus prisijungimas</h1>
+        <p>Prisijunk naudodamas savo administratoriaus paskyrą.</p>
+        <form id="login-form">
+          <label for="email">El. paštas</label>
+          <input id="email" type="email" autocomplete="username"
+            required maxlength="254">
+          <label for="password">Slaptažodis</label>
+          <input id="password" type="password"
+            autocomplete="current-password" required>
+          <button class="full" id="login-button" type="submit">
+            Prisijungti
+          </button>
+        </form>
+        <button class="link" id="forgot-button" type="button">
+          Pamiršau slaptažodį
+        </button>
+        <p id="message" class="message" aria-live="polite"></p>
+        <p><a href="./index.html">Grįžti į demonstraciją</a></p>
+      </section>`;
 
-    const name = document.createElement('strong');
-    name.textContent = entry.visitor_name || '(be vardo)';
+    document.getElementById('login-form').addEventListener(
+      'submit', async event => {
+        event.preventDefault();
+        const button = document.getElementById('login-button');
+        button.disabled = true;
+        showMessage('');
 
-    const date = document.createElement('p');
-    date.textContent = entry.created_at
-      ? new Date(entry.created_at).toLocaleString()
-      : 'Data nenurodyta';
+        try {
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value;
 
-    const del = document.createElement('button');
-    del.className = 'danger';
-    del.textContent = 'Ištrinti įrašą';
-    del.addEventListener('click', () => deleteEntry(entry.id));
+          const { error } = await client.auth.signInWithPassword({
+            email, password
+          });
+          if (error) throw error;
 
-    box.append(name, date, del);
-    container.append(box);
-  }
-}
-
-async function saveSettings(values, successText) {
-  message('Saugoma…');
-
-  const {error} = await client
-    .from('demo_settings')
-    .update(values)
-    .eq('id', 1);
-
-  if (error) {
-    message('Išsaugoti nepavyko: ' + error.message, true);
-    return;
-  }
-
-  await loadData();
-  message(successText);
-}
-
-async function deleteEntry(id) {
-  if (!confirm('Ar tikrai ištrinti šį įrašą?')) return;
-
-  const {error} = await client
-    .from('visitor_entries')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    message('Ištrinti nepavyko: ' + error.message, true);
-    return;
-  }
-
-  await loadData();
-  message('Įrašas ištrintas.');
-}
-
-$('login-form').addEventListener('submit', async event => {
-  event.preventDefault();
-
-  const button = $('login-button');
-  button.disabled = true;
-
-  try {
-    if (recoveryMode) {
-      const newPassword = $('new-password').value;
-      const confirmPassword = $('confirm-password').value;
-
-      if (newPassword.length < 10) {
-        loginMessage('Slaptažodis turi būti bent 10 simbolių.', true);
-        return;
+          const user = await getAdminUser();
+          if (!user) {
+            await client.auth.signOut();
+            throw new Error(
+              'Ši paskyra neturi administratoriaus teisių.'
+            );
+          }
+          await renderDashboard();
+        } catch (error) {
+          showError(error, 'Prisijungti nepavyko.');
+          button.disabled = false;
+        }
       }
+    );
 
-      if (newPassword !== confirmPassword) {
-        loginMessage('Slaptažodžiai nesutampa.', true);
-        return;
-      }
+    document.getElementById('forgot-button').addEventListener(
+      'click', sendRecovery
+    );
+  }
 
-      loginMessage('Saugomas naujas slaptažodis…');
+  async function sendRecovery() {
+    const email = document.getElementById('email').value.trim();
+    if (!email) {
+      showMessage('Pirmiausia įvesk savo el. pašto adresą.', 'error');
+      document.getElementById('email').focus();
+      return;
+    }
 
-      const {data: userData, error: userError} =
-        await client.auth.getUser();
+    const button = document.getElementById('forgot-button');
+    button.disabled = true;
+    showMessage('Siunčiama užklausa…');
 
-      if (userError || userData.user?.id !== ADMIN_UID) {
-        loginMessage(
-          'Atkūrimo nuoroda negalioja arba jos galiojimas baigėsi. Paprašyk naujos.',
-          true
-        );
-        return;
-      }
+    try {
+      const redirectTo = location.origin + location.pathname + '?reset=1';
 
-      const {error} = await client.auth.updateUser({
-        password: newPassword
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo
       });
 
-      if (error) {
-        loginMessage('Pakeisti nepavyko: ' + error.message, true);
+      if (error) throw error;
+
+      showMessage(
+        'Jeigu šiam el. paštui priklauso paskyra, patikrink paštą ir šlamšto aplanką.',
+        'ok'
+      );
+    } catch (error) {
+      showError(error, 'Atkūrimo užklausos išsiųsti nepavyko.');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function renderRecovery() {
+    app.innerHTML = `
+      <section class="card">
+        <h1>Naujas slaptažodis</h1>
+        <p>Įvesk naują slaptažodį du kartus.</p>
+        <form id="reset-form">
+          <label for="new-password">Naujas slaptažodis</label>
+          <input id="new-password" type="password"
+            autocomplete="new-password" minlength="8" required>
+          <label for="confirm-password">Pakartok slaptažodį</label>
+          <input id="confirm-password" type="password"
+            autocomplete="new-password" minlength="8" required>
+          <button class="full" id="reset-button" type="submit">
+            Išsaugoti slaptažodį
+          </button>
+        </form>
+        <p id="message" class="message" aria-live="polite"></p>
+      </section>`;
+
+    document.getElementById('reset-form').addEventListener(
+      'submit', async event => {
+        event.preventDefault();
+
+        const password = document.getElementById('new-password').value;
+        const confirmPassword =
+          document.getElementById('confirm-password').value;
+        const button = document.getElementById('reset-button');
+
+        if (password.length < 8) {
+          showMessage('Slaptažodis turi būti bent 8 simbolių.', 'error');
+          return;
+        }
+        if (password !== confirmPassword) {
+          showMessage('Slaptažodžiai nesutampa.', 'error');
+          return;
+        }
+
+        button.disabled = true;
+        showMessage('Tikrinama paskyra…');
+
+        try {
+          const user = await getAdminUser();
+          if (!user) {
+            throw new Error(
+              'Atkūrimo nuoroda negaliojanti arba pasibaigusi. Paprašyk naujo laiško.'
+            );
+          }
+
+          const { error } = await client.auth.updateUser({ password });
+          if (error) throw error;
+
+          showMessage(
+            'Slaptažodis pakeistas. Dabar gali prisijungti nauju slaptažodžiu.',
+            'ok'
+          );
+
+          await client.auth.signOut();
+          history.replaceState({}, '', location.pathname);
+          setTimeout(renderLogin, 1800);
+        } catch (error) {
+          showError(error, 'Slaptažodžio pakeisti nepavyko.');
+          button.disabled = false;
+        }
+      }
+    );
+  }
+
+  async function loadSettings() {
+    const { data, error } = await client
+      .from('demo_settings')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) settings = { ...settings, ...data };
+  }
+
+  async function renderDashboard() {
+    loading('Atidaromas valdymas…');
+
+    try {
+      const user = await getAdminUser();
+      if (!user) {
+        renderLogin();
         return;
       }
 
-      $('new-password').value = '';
-      $('confirm-password').value = '';
+      await loadSettings();
 
-      await client.auth.signOut();
-      history.replaceState(null, '', window.location.pathname);
-      setRecoveryMode(false);
-      showLogin();
-      loginMessage('Slaptažodis pakeistas! Prisijunk su naujuoju.');
-      return;
+      const { data: rows, error } = await client
+        .from('visitor_entries')
+        .select('id,visitor_name,created_at')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (error) throw error;
+
+      app.innerHTML = `
+        <header class="top">
+          <div>
+            <p>ADMIN CONSOLE</p>
+            <h1>Cyber Safety</h1>
+            <p>Demonstracijos valdymas</p>
+          </div>
+          <button id="logout" class="secondary">Atsijungti</button>
+        </header>
+
+        <div class="grid">
+          <section class="panel">
+            <h2>Demonstracijos būsena</h2>
+            <p id="state">${settings.enabled ? 'ĮJUNGTA' : 'IŠJUNGTA'}</p>
+            <button id="toggle">Įjungti / išjungti</button>
+          </section>
+
+          <section class="panel">
+            <h2>Laukimo laikas</h2>
+            <label for="wait">Sekundės (1–300)</label>
+            <input id="wait" type="number" min="1" max="300"
+              value="${Number(settings.wait_seconds)}">
+            <button id="save-wait">Išsaugoti laiką</button>
+          </section>
+
+          <section class="panel">
+            <h2>Įspėjimo tekstas</h2>
+            <label for="eyebrow">Viršutinė antraštė</label>
+            <input id="eyebrow" maxlength="70"
+              value="${escapeHTML(settings.eyebrow)}">
+            <label for="headline">Pagrindinis tekstas</label>
+            <input id="headline" maxlength="100"
+              value="${escapeHTML(settings.headline)}">
+            <label for="detail">Papildomas tekstas</label>
+            <input id="detail" maxlength="120"
+              value="${escapeHTML(settings.detail)}">
+            <button id="save-text">Išsaugoti tekstus</button>
+          </section>
+
+          <section class="panel wide">
+            <h2>Lankytojų įrašai (${(rows || []).length})</h2>
+            <p>Rodomi naujausi 500 įrašų.</p>
+            <div id="visitors">
+              ${(rows || []).length ? rows.map(row => `
+                <div class="visitor">
+                  <strong>${escapeHTML(row.visitor_name)}</strong>
+                  <p>${escapeHTML(new Date(row.created_at).toLocaleString())}</p>
+                  <button data-delete="${Number(row.id)}"
+                    class="secondary">Ištrinti įrašą</button>
+                </div>`).join('') : '<p>Įrašų kol kas nėra.</p>'}
+            </div>
+            <button id="clear" class="secondary">
+              Ištrinti visus įrašus
+            </button>
+          </section>
+        </div>
+        <p id="message" class="message" aria-live="polite"></p>
+      `;
+
+      document.getElementById('logout').onclick = async () => {
+        await client.auth.signOut();
+        renderLogin();
+      };
+
+      document.getElementById('toggle').onclick = async () => {
+        const { error } = await client.from('demo_settings')
+          .update({ enabled: !settings.enabled }).eq('id', 1);
+        if (error) return showError(error, 'Būsenos pakeisti nepavyko.');
+        await renderDashboard();
+      };
+
+      document.getElementById('save-wait').onclick = async () => {
+        const value = Number(document.getElementById('wait').value);
+        if (!Number.isInteger(value) || value < 1 || value > 300) {
+          showMessage('Įvesk skaičių nuo 1 iki 300.', 'error');
+          return;
+        }
+        const { error } = await client.from('demo_settings')
+          .update({ wait_seconds: value }).eq('id', 1);
+        if (error) return showError(error, 'Laiko išsaugoti nepavyko.');
+        showMessage('Laukimo laikas išsaugotas.', 'ok');
+        await renderDashboard();
+      };
+
+      document.getElementById('save-text').onclick = async () => {
+        const values = {
+          eyebrow: document.getElementById('eyebrow').value.trim() ||
+            'CYBER SECURITY ALERT',
+          headline: document.getElementById('headline').value.trim() ||
+            "YOU'VE BEEN HACKED!",
+          detail: document.getElementById('detail').value.trim() ||
+            'UNAUTHORIZED ACCESS DETECTED'
+        };
+        const { error } = await client.from('demo_settings')
+          .update(values).eq('id', 1);
+        if (error) return showError(error, 'Tekstų išsaugoti nepavyko.');
+        showMessage('Tekstai išsaugoti.', 'ok');
+        await renderDashboard();
+      };
+
+      document.querySelectorAll('[data-delete]').forEach(button => {
+        button.onclick = async () => {
+          if (!confirm('Tikrai ištrinti šį įrašą?')) return;
+          const { error } = await client.from('visitor_entries')
+            .delete().eq('id', Number(button.dataset.delete));
+          if (error) return showError(error, 'Įrašo ištrinti nepavyko.');
+          await renderDashboard();
+        };
+      });
+
+      document.getElementById('clear').onclick = async () => {
+        if (!confirm('Tikrai ištrinti visus lankytojų įrašus?')) return;
+        const { error } = await client.from('visitor_entries')
+          .delete().gte('id', 0);
+        if (error) return showError(error, 'Įrašų ištrinti nepavyko.');
+        await renderDashboard();
+      };
+
+    } catch (error) {
+      app.innerHTML = `
+        <section class="card">
+          <h1>Duomenų arba ryšio klaida</h1>
+          <p>Patikrink projekto URL, lentelių pavadinimus ir duomenų bazės leidimus.</p>
+          <p id="message" class="message error"></p>
+          <button id="retry">Bandyti dar kartą</button>
+        </section>`;
+      showError(error, 'Nepavyko atidaryti valdymo skydelio.');
+      document.getElementById('retry').onclick = renderDashboard;
+    }
+  }
+
+  async function start() {
+    if (!window.supabase) {
+      throw new Error('Nepavyko įkelti Supabase bibliotekos.');
     }
 
-    loginMessage('Jungiamasi…');
+    client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const {error} = await client.auth.signInWithPassword({
-      email: $('email').value.trim(),
-      password: $('password').value
+    // Supabase apdoroja atkūrimo nuorodos sesiją iš el. laiško.
+    client.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' && session) {
+        renderRecovery();
+      }
     });
 
-    if (error) {
-      loginMessage('Prisijungti nepavyko. Patikrink el. paštą ir slaptažodį.', true);
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+
+    if (resetRequested) {
+      if (data.session) {
+        await renderRecovery();
+      } else {
+        app.innerHTML = `
+          <section class="card">
+            <h1>Atkūrimo nuoroda negalioja</h1>
+            <p>Atidaryk naujausią slaptažodžio atkūrimo laišką arba paprašyk naujo.</p>
+            <button id="back">Grįžti į prisijungimą</button>
+          </section>`;
+        document.getElementById('back').onclick = () => {
+          history.replaceState({}, '', location.pathname);
+          renderLogin();
+        };
+      }
       return;
     }
 
-    if (await verifyAdmin()) {
-      showDashboard();
-      await loadData();
-    }
-  } catch (error) {
-    loginMessage('Įvyko klaida: ' + error.message, true);
-  } finally {
-    button.disabled = false;
-  }
-});
-
-$('forgot-password').addEventListener('click', async () => {
-  const email = $('email').value.trim();
-
-  if (!email) {
-    loginMessage('Pirmiausia įrašyk administratoriaus el. paštą.', true);
-    $('email').focus();
-    return;
+    const user = await getAdminUser();
+    if (user) await renderDashboard();
+    else renderLogin();
   }
 
-  const button = $('forgot-password');
-  button.disabled = true;
-  loginMessage('Siunčiama atkūrimo nuoroda…');
-
-  try {
-    const redirectTo = window.location.origin +
-      window.location.pathname + '?reset=1';
-
-    const {error} = await client.auth.resetPasswordForEmail(email, {
-      redirectTo
-    });
-
-    if (error) {
-      loginMessage('Laiško išsiųsti nepavyko: ' + error.message, true);
-      return;
-    }
-
-    loginMessage(
-      'Jei paskyra egzistuoja, patikrink el. paštą ir šlamšto aplanką.'
-    );
-  } catch (error) {
-    loginMessage('Klaida: ' + error.message, true);
-  } finally {
-    button.disabled = false;
-  }
-});
-
-$('back-to-login').addEventListener('click', async () => {
-  await client.auth.signOut();
-  history.replaceState(null, '', window.location.pathname);
-  setRecoveryMode(false);
-  showLogin();
-});
-
-$('toggle').addEventListener('click', async () => {
-  await saveSettings(
-    {enabled: !settings.enabled},
-    'Demonstracijos būsena pakeista.'
-  );
-});
-
-$('save-wait').addEventListener('click', async () => {
-  const value = Number($('wait').value);
-
-  if (!Number.isInteger(value) || value < 1 || value > 300) {
-    message('Įvesk sveiką skaičių nuo 1 iki 300.', true);
-    return;
-  }
-
-  await saveSettings({wait_seconds: value}, 'Laukimo laikas išsaugotas.');
-});
-
-$('save-text').addEventListener('click', async () => {
-  await saveSettings({
-    eyebrow: $('eyebrow').value.trim() || defaults.eyebrow,
-    headline: $('headline').value.trim() || defaults.headline,
-    detail: $('detail').value.trim() || defaults.detail
-  }, 'Įspėjimo tekstai išsaugoti.');
-});
-
-$('refresh').addEventListener('click', loadData);
-
-$('logout').addEventListener('click', async () => {
-  await client.auth.signOut();
-  showLogin();
-  loginMessage('Atsijungei.');
-});
-
-async function start() {
-  if (!window.supabase) {
-    loginMessage('Nepavyko įkelti Supabase bibliotekos.', true);
-    $('login-button').disabled = true;
-    return;
-  }
-
-  client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  const url = new URL(window.location.href);
-  const isResetLink = url.searchParams.get('reset') === '1';
-
-  client.auth.onAuthStateChange(event => {
-    if (event === 'PASSWORD_RECOVERY') {
-      setRecoveryMode(true);
-      showLogin();
-    }
+  start().catch(error => {
+    console.error(error);
+    app.innerHTML = `
+      <section class="card">
+        <h1>Nepavyko prisijungti prie serverio</h1>
+        <p>Patikrink interneto ryšį ir projekto URL.</p>
+        <p class="message error">${escapeHTML(error.message || 'Nežinoma klaida')}</p>
+        <button onclick="location.reload()">Bandyti dar kartą</button>
+      </section>`;
   });
-
-  const {data, error} = await client.auth.getSession();
-
-  if (error) {
-    loginMessage('Nepavyko patikrinti sesijos. Atnaujink puslapį.', true);
-    return;
-  }
-
-  if (isResetLink) {
-    setRecoveryMode(true);
-    showLogin();
-    return;
-  }
-
-  if (data.session && await verifyAdmin()) {
-    showDashboard();
-    await loadData();
-  } else {
-    showLogin();
-  }
-}
-
-start().catch(error => {
-  console.error(error);
-  loginMessage('Paleidimo klaida: ' + error.message, true);
-});
+})();
 </script>
 </body>
 </html>
