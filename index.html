@@ -1,175 +1,73 @@
+
 <!DOCTYPE html>
 <html lang="lt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cyber Safety Demo</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh; padding: 20px;
-      display: grid; place-items: center;
-      font-family: Arial, sans-serif;
-      background: #0b1120; color: #f1f5f9;
-    }
-    .card {
-      width: 100%; max-width: 440px; padding: 30px;
-      background: #151e30; border: 1px solid #334155;
-      border-radius: 18px;
-    }
-    h1 { margin-top: 0; }
-    p { line-height: 1.6; color: #cbd5e1; }
-    label { display: block; margin: 16px 0 7px; }
-    input {
-      width: 100%; padding: 12px; border-radius: 8px;
-      border: 1px solid #475569; background: #0b1120;
-      color: white; font-size: 16px;
-    }
-    button {
-      width: 100%; padding: 13px; margin-top: 20px;
-      border: 0; border-radius: 8px;
-      background: #2563eb; color: white;
-      font-size: 16px; font-weight: bold; cursor: pointer;
-    }
-    button:disabled { opacity: .6; cursor: wait; }
-    #message { overflow-wrap: anywhere; }
-    .alert { color: #f87171; }
-    .success { color: #86efac; }
-    .small { font-size: 12px; color: #94a3b8; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> </title>
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: white;
+        }
+
+        .container {
+            width: 300px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background: #222;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <main class="card">
-    <h1>Cyber Safety</h1>
-    <p>
-      Tai mokomoji kibernetinio saugumo demonstracija.
-      Naudok tik demonstracijai skirtą vardą.
-    </p>
 
-    <form id="visitor-form">
-      <label for="first">Vardas</label>
-      <input id="first" maxlength="60" required>
+    <div class="container">
+        <form id="loginForm">
+            <label for="vardas">Vardas</label>
+            <input type="text" id="vardas" required>
 
-      <label for="last">Pavardė</label>
-      <input id="last" maxlength="60" required>
+            <label for="pavarde">Pavardė</label>
+            <input type="text" id="pavarde" required>
 
-      <button id="submit-button" type="submit">
-        Tęsti
-      </button>
-    </form>
+            <button type="submit">Tęsti</button>
+        </form>
+    </div>
 
-    <p id="message" role="status" aria-live="polite"></p>
-    <p class="small">
-      Mokomoji demonstracija. Neįvesk slaptažodžių
-      ar kitos jautrios informacijos.
-    </p>
-  </main>
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            alert("You hacked");
+        });
+    </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL =
-      'https://wupmkjuttnjxszkejviz.supabase.co';
-
-    const SUPABASE_KEY =
-      'sb_publishable_fJwyIIamC8-w_kM-LEPzKg_cAxPiy2X';
-
-    const form = document.getElementById('visitor-form');
-    const button = document.getElementById('submit-button');
-    const message = document.getElementById('message');
-
-    function showMessage(text, type = '') {
-      message.textContent = text;
-      message.className = type;
-    }
-
-    async function start() {
-      if (!window.supabase) {
-        showMessage(
-          'Nepavyko įkelti Supabase bibliotekos. Patikrink internetą.',
-          'alert'
-        );
-        button.disabled = true;
-        return;
-      }
-
-      const client = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
-
-      try {
-        const { data, error } = await client
-          .from('demo_settings')
-          .select('enabled, wait_seconds, eyebrow, headline, detail')
-          .eq('id', 1)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        if (!data) {
-          throw new Error(
-            'Nerasta demo_settings eilutė, kurios id = 1.'
-          );
-        }
-
-        if (!data.enabled) {
-          button.disabled = true;
-          showMessage('Demonstracija šiuo metu išjungta.');
-        }
-      } catch (error) {
-        console.error('Supabase nustatymų klaida:', error);
-        showMessage(
-          'Nepavyko prisijungti prie demonstracijos nustatymų. ' +
-          'Išsami klaida pateikta naršyklės Console.',
-          'alert'
-        );
-      }
-
-      form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        showMessage('');
-
-        if (button.disabled) return;
-
-        const first = document.getElementById('first').value.trim();
-        const last = document.getElementById('last').value.trim();
-        const fullName = `${first} ${last}`.trim();
-
-        if (!first || !last || fullName.length > 120) {
-          showMessage('Patikrink įvestus duomenis.', 'alert');
-          return;
-        }
-
-        button.disabled = true;
-        button.textContent = 'Siunčiama…';
-
-        try {
-          const { error } = await client
-            .from('visitor_entries')
-            .insert({ visitor_name: fullName });
-
-          if (error) throw error;
-
-          form.hidden = true;
-          showMessage(
-            'Įrašas išsaugotas. Tai mokomoji demonstracija; ' +
-            'tavo įrenginys nebuvo nulaužtas.',
-            'success'
-          );
-        } catch (error) {
-          console.error('Įrašo išsaugojimo klaida:', error);
-          showMessage(
-            'Įrašo išsaugoti nepavyko. Patikrink lentelę ' +
-            'visitor_entries ir jos RLS leidimus.',
-            'alert'
-          );
-          button.disabled = false;
-          button.textContent = 'Tęsti';
-        }
-      });
-    }
-
-    start();
-  </script>
 </body>
 </html>
