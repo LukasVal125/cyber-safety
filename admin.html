@@ -4,184 +4,331 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cyber Safety — Admin</title>
+<title>Cyber Safety – Admin</title>
 <style>
+:root{color-scheme:dark;font-family:Arial,sans-serif}
 *{box-sizing:border-box}
-body{margin:0;padding:22px;background:#0b1020;color:#eef2ff;font-family:Arial,sans-serif}
+body{margin:0;background:#0b1120;color:#f1f5f9;padding:24px}
 main{max-width:1000px;margin:auto}
-h1{margin:14px 0}
-p{color:#b5c1d8;line-height:1.5}
-a{color:#91b5ff}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
-.panel{padding:20px;background:#151d31;border:1px solid #2b3854;border-radius:14px;min-width:0}
-.panel h2{font-size:18px;margin-top:0}
-label{display:block;margin:14px 0 7px;font-size:14px}
-input{width:100%;padding:12px;border:1px solid #394760;border-radius:8px;background:#0c1324;color:white;font:inherit}
-button{padding:11px 14px;margin-top:12px;border:0;border-radius:8px;background:#3478f6;color:white;font-weight:bold;cursor:pointer}
-button.danger{background:#a92e40}
-button.secondary{background:#35425d}
-.record{padding:14px;margin-top:12px;border:1px solid #394760;border-radius:10px;overflow-wrap:anywhere}
-.record button{width:auto}
-.note{font-size:13px;color:#ffce7a}
-#dashboard{display:none}
+.panel{background:#151e30;border:1px solid #334155;border-radius:14px;padding:22px;margin:16px 0}
+h1,h2{margin-top:0}
+p{color:#cbd5e1;line-height:1.5}
+input{display:block;width:100%;padding:12px;margin:8px 0 14px;border:1px solid #475569;border-radius:8px;background:#0b1120;color:white}
+button{padding:11px 15px;border:0;border-radius:8px;background:#2563eb;color:white;cursor:pointer;margin:4px}
+button:disabled{opacity:.5}
+.danger{background:#b91c1c}
+.secondary{background:#334155}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.entry{padding:14px;border:1px solid #334155;border-radius:10px;margin:10px 0;overflow-wrap:anywhere}
+.status{color:#86efac}
+.error{color:#fca5a5}
+small{color:#94a3b8}
+a{color:#93c5fd}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
 <main>
-<section class="panel" id="login">
-<h1>Administratoriaus prisijungimas</h1>
-<p>Įvesk demonstracinį slaptažodį.</p>
-<form id="login-form">
-<label for="password">Slaptažodis</label>
-<input id="password" type="password" required>
-<button type="submit">Prisijungti</button>
-</form>
-<p class="note">Demonstracinis prisijungimas nėra tikra apsauga.</p>
-</section>
+  <h1>Cyber Safety – Admin</h1>
+  <p>Administratoriaus valdymo skydelis.</p>
 
-<section id="dashboard">
-<header>
-<h1>Cyber Safety — valdymas</h1>
-<p><a href="./index.html">← Grįžti į demonstraciją</a></p>
-</header>
+  <section id="login-panel" class="panel">
+    <h2>Prisijungimas</h2>
+    <form id="login-form">
+      <label for="email">Administratoriaus el. paštas</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="password">Slaptažodis</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button id="login-button">Prisijungti</button>
+    </form>
+    <p id="login-message" role="status"></p>
+    <small>Prisijungti gali tik Supabase Auth paskyra, kuriai suteiktos administratoriaus teisės.</small>
+  </section>
 
-<div class="grid">
-<section class="panel">
-<h2>Demonstracijos būsena</h2>
-<p id="state"></p>
-<button id="toggle">Įjungti / išjungti</button>
-</section>
+  <section id="dashboard" hidden>
+    <div class="panel">
+      <button id="refresh" type="button">Atnaujinti duomenis</button>
+      <button id="logout" class="secondary" type="button">Atsijungti</button>
+      <p id="message" role="status"></p>
+    </div>
 
-<section class="panel">
-<h2>Laukimo laikas</h2>
-<p>Laikas iki įspėjimo ekrano.</p>
-<label for="wait">Sekundės (1–300)</label>
-<input id="wait" type="number" min="1" max="300">
-<button id="save-wait">Išsaugoti laiką</button>
-</section>
+    <div class="grid">
+      <section class="panel">
+        <h2>Demonstracijos būsena</h2>
+        <p id="state"></p>
+        <button id="toggle" type="button">Įjungti / išjungti</button>
+      </section>
 
-<section class="panel">
-<h2>Įspėjimo tekstas</h2>
-<label for="eyebrow">Viršutinė antraštė</label>
-<input id="eyebrow" maxlength="70">
-<label for="headline">Pagrindinis tekstas</label>
-<input id="headline" maxlength="100">
-<label for="detail">Papildomas tekstas</label>
-<input id="detail" maxlength="120">
-<button id="save-text">Patvirtinti pakeitimus</button>
-</section>
+      <section class="panel">
+        <h2>Laukimo laikas</h2>
+        <label for="wait">Sekundės (1–300)</label>
+        <input id="wait" type="number" min="1" max="300" value="30">
+        <button id="save-wait" type="button">Išsaugoti laiką</button>
+      </section>
+    </div>
 
-<section class="panel" style="grid-column:1/-1">
-<h2>Prisijungę žmonės</h2>
-<p>Įrašai išsaugomi tik tame pačiame naršyklės profilyje. Jie nėra siunčiami į bendrą serverį.</p>
-<div id="records"></div>
-<button id="clear" class="danger">Ištrinti visus įrašus</button>
-</section>
-</div>
+    <section class="panel">
+      <h2>Įspėjimo tekstai</h2>
+      <label for="eyebrow">Viršutinė antraštė</label>
+      <input id="eyebrow" maxlength="70">
+      <label for="headline">Pagrindinė antraštė</label>
+      <input id="headline" maxlength="100">
+      <label for="detail">Papildomas tekstas</label>
+      <input id="detail" maxlength="120">
+      <button id="save-text" type="button">Išsaugoti tekstus</button>
+    </section>
 
-<p class="note">Svarbu: GitHub Pages yra statinis talpinimas. Šis pavyzdys nesurenka lankytojų duomenų iš kitų įrenginių. Slaptažodis įrašytas kode, todėl nenaudok jo tikram administratoriaus saugumui.</p>
-</section>
+    <section class="panel">
+      <h2>Lankytojų įrašai</h2>
+      <p id="count"></p>
+      <div id="entries"></div>
+    </section>
+  </section>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = 'https://wupmkjuttnjxszkejviz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fJwyIIamC8-w_kM-LEPzKg_cAxPiy2X';
+const ADMIN_UID = 'fa9fb1f4-9380-4a10-b354-dde6795a3f2a';
+
+const $ = id => document.getElementById(id);
 const defaults = {
-  enabled:true,
-  waitSeconds:30,
-  eyebrow:'CYBER SECURITY ALERT',
-  headline:"YOU'VE BEEN HACKED!",
-  detail:'UNAUTHORIZED ACCESS DETECTED'
+  id: 1,
+  enabled: true,
+  wait_seconds: 30,
+  eyebrow: 'CYBER SECURITY ALERT',
+  headline: "YOU'VE BEEN HACKED!",
+  detail: 'UNAUTHORIZED ACCESS DETECTED'
 };
-function read(key, fallback) {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallback;
-  } catch { return fallback; }
-}
-function settings() {
-  return {...defaults, ...read('cyberDemoSettings', {})};
-}
-function saveSettings(s) {
-  localStorage.setItem('cyberDemoSettings', JSON.stringify(s));
-}
-function render() {
-  const s = settings();
-  document.getElementById('state').textContent = s.enabled ? 'ĮJUNGTA' : 'IŠJUNGTA';
-  document.getElementById('wait').value = s.waitSeconds;
-  document.getElementById('eyebrow').value = s.eyebrow;
-  document.getElementById('headline').value = s.headline;
-  document.getElementById('detail').value = s.detail;
 
-  const visitors = read('cyberDemoVisitors', []);
-  const records = document.getElementById('records');
-  records.replaceChildren();
+let settings = {...defaults};
+let client;
+let entries = [];
 
-  if (!visitors.length) {
-    const empty = document.createElement('p');
-    empty.textContent = 'Įrašų kol kas nėra.';
-    records.appendChild(empty);
-  } else {
-    visitors.forEach((visitor, index) => {
-      const box = document.createElement('div');
-      box.className = 'record';
-      const name = document.createElement('strong');
-      name.textContent = (index + 1) + '. ' + visitor.name;
-      const time = document.createElement('p');
-      time.textContent = 'Pateikta: ' + visitor.time;
-      const del = document.createElement('button');
-      del.className = 'danger';
-      del.textContent = 'Ištrinti';
-      del.addEventListener('click', () => {
-        const current = read('cyberDemoVisitors', []);
-        current.splice(index, 1);
-        localStorage.setItem('cyberDemoVisitors', JSON.stringify(current));
-        render();
-      });
-      box.append(name, time, del);
-      records.appendChild(box);
-    });
+function message(text, error = false) {
+  $('message').textContent = text;
+  $('message').className = error ? 'error' : 'status';
+}
+
+function loginMessage(text, error = false) {
+  $('login-message').textContent = text;
+  $('login-message').className = error ? 'error' : 'status';
+}
+
+function showLogin() {
+  $('login-panel').hidden = false;
+  $('dashboard').hidden = true;
+}
+
+function showDashboard() {
+  $('login-panel').hidden = true;
+  $('dashboard').hidden = false;
+}
+
+async function verifyAdmin() {
+  const {data, error} = await client.auth.getUser();
+  if (error || data.user?.id !== ADMIN_UID) {
+    await client.auth.signOut();
+    showLogin();
+    loginMessage('Ši paskyra neturi administratoriaus teisių.', true);
+    return false;
+  }
+  return true;
+}
+
+async function loadData() {
+  message('Kraunami duomenys…');
+
+  const {data: config, error: configError} = await client
+    .from('demo_settings')
+    .select('*')
+    .eq('id', 1)
+    .maybeSingle();
+
+  if (configError) {
+    message('Nustatymų nuskaityti nepavyko: ' + configError.message, true);
+    return;
+  }
+  if (!config) {
+    message('Nerasta demo_settings eilutė su id = 1.', true);
+    return;
+  }
+
+  settings = {...defaults, ...config};
+  $('state').textContent = settings.enabled ? 'ĮJUNGTA' : 'IŠJUNGTA';
+  $('wait').value = settings.wait_seconds;
+  $('eyebrow').value = settings.eyebrow;
+  $('headline').value = settings.headline;
+  $('detail').value = settings.detail;
+
+  const {data, error} = await client
+    .from('visitor_entries')
+    .select('id, visitor_name, created_at')
+    .order('created_at', {ascending: false})
+    .limit(500);
+
+  if (error) {
+    message('Įrašų nuskaityti nepavyko: ' + error.message, true);
+    return;
+  }
+
+  entries = data || [];
+  renderEntries();
+  message('Duomenys atnaujinti.');
+}
+
+function renderEntries() {
+  $('count').textContent = 'Rodoma įrašų: ' + entries.length +
+    (entries.length === 500 ? ' (naujausi 500)' : '');
+
+  const container = $('entries');
+  container.replaceChildren();
+
+  if (!entries.length) {
+    container.textContent = 'Įrašų dar nėra.';
+    return;
+  }
+
+  for (const entry of entries) {
+    const box = document.createElement('div');
+    box.className = 'entry';
+
+    const name = document.createElement('strong');
+    name.textContent = entry.visitor_name || '(be vardo)';
+
+    const date = document.createElement('p');
+    date.textContent = entry.created_at
+      ? new Date(entry.created_at).toLocaleString()
+      : 'Data nenurodyta';
+
+    const del = document.createElement('button');
+    del.className = 'danger';
+    del.textContent = 'Ištrinti įrašą';
+    del.addEventListener('click', () => deleteEntry(entry.id));
+
+    box.append(name, date, del);
+    container.append(box);
   }
 }
-document.getElementById('login-form').addEventListener('submit', event => {
+
+async function saveSettings(values, successText) {
+  message('Saugoma…');
+  const {error} = await client
+    .from('demo_settings')
+    .update(values)
+    .eq('id', 1);
+
+  if (error) {
+    message('Išsaugoti nepavyko: ' + error.message, true);
+    return;
+  }
+
+  await loadData();
+  message(successText);
+}
+
+async function deleteEntry(id) {
+  if (!confirm('Ar tikrai ištrinti šį įrašą?')) return;
+
+  const {error} = await client
+    .from('visitor_entries')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    message('Ištrinti nepavyko: ' + error.message, true);
+    return;
+  }
+
+  await loadData();
+  message('Įrašas ištrintas.');
+}
+
+$('login-form').addEventListener('submit', async event => {
   event.preventDefault();
-  if (document.getElementById('password').value !== 'demo123') {
-    alert('Neteisingas slaptažodis.');
-    return;
+  $('login-button').disabled = true;
+  loginMessage('Jungiamasi…');
+
+  try {
+    const {error} = await client.auth.signInWithPassword({
+      email: $('email').value.trim(),
+      password: $('password').value
+    });
+
+    if (error) {
+      loginMessage('Prisijungti nepavyko: ' + error.message, true);
+      return;
+    }
+
+    if (await verifyAdmin()) {
+      showDashboard();
+      await loadData();
+    }
+  } catch (error) {
+    loginMessage('Klaida: ' + error.message, true);
+  } finally {
+    $('login-button').disabled = false;
   }
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-  render();
 });
-document.getElementById('toggle').addEventListener('click', () => {
-  const s = settings();
-  s.enabled = !s.enabled;
-  saveSettings(s);
-  render();
+
+$('toggle').addEventListener('click', async () => {
+  await saveSettings(
+    {enabled: !settings.enabled},
+    'Demonstracijos būsena pakeista.'
+  );
 });
-document.getElementById('save-wait').addEventListener('click', () => {
-  const value = Number(document.getElementById('wait').value);
+
+$('save-wait').addEventListener('click', async () => {
+  const value = Number($('wait').value);
   if (!Number.isInteger(value) || value < 1 || value > 300) {
-    alert('Įvesk sveiką skaičių nuo 1 iki 300.');
+    message('Įvesk sveiką skaičių nuo 1 iki 300.', true);
     return;
   }
-  const s = settings();
-  s.waitSeconds = value;
-  saveSettings(s);
-  alert('Laukimo laikas išsaugotas.');
-  render();
+  await saveSettings({wait_seconds: value}, 'Laukimo laikas išsaugotas.');
 });
-document.getElementById('save-text').addEventListener('click', () => {
-  const s = settings();
-  s.eyebrow = document.getElementById('eyebrow').value.trim() || defaults.eyebrow;
-  s.headline = document.getElementById('headline').value.trim() || defaults.headline;
-  s.detail = document.getElementById('detail').value.trim() || defaults.detail;
-  saveSettings(s);
-  alert('Pakeitimai išsaugoti.');
-  render();
+
+$('save-text').addEventListener('click', async () => {
+  await saveSettings({
+    eyebrow: $('eyebrow').value.trim() || defaults.eyebrow,
+    headline: $('headline').value.trim() || defaults.headline,
+    detail: $('detail').value.trim() || defaults.detail
+  }, 'Įspėjimo tekstai išsaugoti.');
 });
-document.getElementById('clear').addEventListener('click', () => {
-  if (!confirm('Tikrai ištrinti visus įrašus šiame naršyklės profilyje?')) return;
-  localStorage.removeItem('cyberDemoVisitors');
-  render();
+
+$('refresh').addEventListener('click', loadData);
+
+$('logout').addEventListener('click', async () => {
+  await client.auth.signOut();
+  showLogin();
+  loginMessage('Atsijungei.');
+});
+
+async function start() {
+  if (!window.supabase) {
+    loginMessage('Nepavyko įkelti Supabase bibliotekos.', true);
+    $('login-button').disabled = true;
+    return;
+  }
+
+  client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const {data} = await client.auth.getSession();
+  if (data.session && await verifyAdmin()) {
+    showDashboard();
+    await loadData();
+  } else {
+    showLogin();
+  }
+
+  client.auth.onAuthStateChange((_event, session) => {
+    if (!session) showLogin();
+  });
+}
+
+start().catch(error => {
+  console.error(error);
+  loginMessage('Paleidimo klaida: ' + error.message, true);
 });
 </script>
 </body>
