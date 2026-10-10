@@ -8,228 +8,175 @@
 <style>
 :root{color-scheme:light dark;--bg:light-dark(#f3f6fb,#080b12);--panel:light-dark(#fff,#111722);--text:light-dark(#172033,#edf2fa);--muted:light-dark(#667085,#9aa7ba);--line:light-dark(#dfe5ee,#283243);--blue:#2563eb}
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--text)}
+body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 #app{min-height:100vh;display:grid;place-items:center;padding:24px}
-.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px}
-.card{width:min(100%,430px)}
-h1{font-size:27px;margin:8px 0}
-p{color:var(--muted);line-height:1.5}
-label{display:block;margin:14px 0 6px;font-size:14px}
-input{width:100%;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--text)}
-button{padding:12px;border:0;border-radius:9px;background:var(--blue);color:white;font-weight:700;cursor:pointer;margin-top:12px}
-form button,.wide{width:100%}
-button:disabled{opacity:.6}
-a{color:#60a5fa}
-.small{font-size:12px;text-align:center}
-.admin{width:min(100%,1000px);margin:auto}
-.head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
-.panel h2{font-size:17px;margin:0 0 10px}
-.entry{border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0;overflow-wrap:anywhere}
-.danger{background:#b42332}
-.alert{text-align:center;max-width:700px}
-.alert h1{color:#ff454f;font-size:clamp(32px,7vw,62px)}
+.card{width:min(100%,430px);padding:32px;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:0 20px 60px #00000014}
+.mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:light-dark(#eaf0ff,#17274a);color:var(--blue);font-size:22px;font-weight:800;margin-bottom:24px}
+h1{font-size:28px;letter-spacing:-.5px;margin:0 0 12px}
+.sub{color:var(--muted);line-height:1.55;margin:0 0 24px}
+label{display:block;font-size:13px;font-weight:650;margin:16px 0 7px}
+input{width:100%;padding:13px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit}
+button{width:100%;margin-top:22px;padding:14px;border:0;border-radius:10px;background:var(--blue);color:white;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+.fine{font-size:12px;color:var(--muted);text-align:center;margin-top:17px}
+.alert{width:min(100%,700px);text-align:center}
+.alert h1{color:#ff343f;font-size:clamp(34px,7vw,64px)}
+.alert p{color:var(--muted);line-height:1.6}
+.status{display:inline-block;margin-top:20px;border:1px solid #71323a;color:#ff737b;padding:10px 14px;border-radius:8px;font-size:12px}
 </style>
 </head>
 <body>
-<main id="app"></main>
+<main id="app">
+<section class="card">
+<div class="mark">W</div>
+<h1>Welcome!</h1>
+<p class="sub">Tai kibernetinio saugumo demonstracija.</p>
+<form id="details-form" autocomplete="off">
+<label for="first">First name</label>
+<input id="first" name="first" placeholder="Enter your first name" maxlength="60" required>
+<label for="last">Last name</label>
+<input id="last" name="last" placeholder="Enter your last name" maxlength="60" required>
+<button type="submit">Continue</button>
+</form>
+<p class="fine">Tik mokomoji demonstracija. Nevesk slaptažodžių ar jautrios informacijos.</p>
+</section>
+</main>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://wupmkjuttnjsxzkejviz.supabase.co';
 const SUPABASE_KEY='sb_publishable_fJwyIIamC8-w_kM-LEPzKg_cAxPiy2X';
-const ADMIN_UID='fa9fb1f4-9380-4a10-b354-dde6795a3f2a';
 
 const app=document.getElementById('app');
+const form=document.getElementById('details-form');
 const defaults={
- id:1,enabled:true,wait_seconds:30,
- eyebrow:'CYBER SECURITY ALERT',
- headline:"YOU'VE BEEN HACKED!",
- detail:'UNAUTHORIZED ACCESS DETECTED'
+  enabled:true,
+  wait_seconds:30,
+  eyebrow:'CYBER SECURITY ALERT',
+  headline:"YOU'VE BEEN HACKED!",
+  detail:'UNAUTHORIZED ACCESS DETECTED'
 };
-let settings={...defaults};
-let db;
 
-function esc(v){
- return String(v??'').replace(/[&<>"']/g,c=>({
- '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
- })[c]);
+let settings={...defaults};
+let client;
+let busy=false;
+
+function escapeHTML(value){
+  return String(value??'').replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;',
+    '"':'&quot;',"'":'&#39;'
+  })[c]);
 }
-function showError(message){
- app.innerHTML='<section class="card"><h1>Klaida</h1><p>'+esc(message)+'</p><button onclick="location.reload()">Bandyti dar kartą</button></section>';
+
+async function start(){
+  if(!window.supabase){
+    throw new Error('Supabase biblioteka neįkelta.');
+  }
+
+  client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+  const {data,error}=await client
+    .from('demo_settings')
+    .select('enabled,wait_seconds,eyebrow,headline,detail')
+    .eq('id',1)
+    .maybeSingle();
+
+  if(error) throw error;
+
+  if(data) settings={...defaults,...data};
+
+  if(!settings.enabled){
+    showDisabled();
+    return;
+  }
+
+  form.addEventListener('submit',submitVisitor);
 }
-async function loadSettings(){
- const {data,error}=await db.from('demo_settings')
-  .select('*').eq('id',1).maybeSingle();
- if(error) throw error;
- if(data) settings={...defaults,...data};
+
+function showDisabled(){
+  app.innerHTML=`
+    <section class="card">
+      <div class="mark">i</div>
+      <h1>Demonstracija išjungta</h1>
+      <p class="sub">Šiuo metu demonstracija nepasiekiama.</p>
+    </section>`;
 }
-function showAlert(){
- app.innerHTML=`<section class="alert">
- <p>CYBER SECURITY ALERT</p>
- <h1>${esc(settings.headline)}</h1>
- <h2>${esc(settings.detail)}</h2>
- <p>${esc(settings.eyebrow)}</p>
- <p>Simuliacija baigta. Įrenginys nebuvo nulaužtas.</p>
- <button onclick="location.href='?'">Grįžti</button>
- </section>`;
-}
-function showVisitor(){
- app.innerHTML=`<section class="card">
- <h1>Cyber Safety</h1>
- <p>Mokomoji kibernetinio saugumo demonstracija. Įvestas vardas bus išsaugotas demonstracijos duomenų bazėje.</p>
- <form id="visitor-form">
- <label for="first">Vardas</label>
- <input id="first" maxlength="60" required>
- <label for="last">Pavardė</label>
- <input id="last" maxlength="60" required>
- <button class="wide" type="submit">Continue</button>
- </form>
- <p class="small">Nevesk slaptažodžių ar jautrios asmeninės informacijos.</p>
- </section>`;
- document.getElementById('visitor-form').addEventListener('submit',async e=>{
-  e.preventDefault();
-  if(!settings.enabled){alert('Demonstracija išjungta.');return;}
-  const name=(document.getElementById('first').value.trim()+' '+
-   document.getElementById('last').value.trim()).trim();
-  if(!name||name.length>120)return;
-  const button=e.currentTarget.querySelector('button');
+
+async function submitVisitor(event){
+  event.preventDefault();
+  if(busy) return;
+
+  if(!settings.enabled){
+    showDisabled();
+    return;
+  }
+
+  const first=document.getElementById('first').value.trim();
+  const last=document.getElementById('last').value.trim();
+  const fullName=(first+' '+last).trim();
+
+  if(!first||!last||fullName.length>120){
+    alert('Patikrink įvestus duomenis.');
+    return;
+  }
+
+  busy=true;
+  const button=form.querySelector('button');
   button.disabled=true;
   button.textContent='Siunčiama…';
-  const {error}=await db.from('visitor_entries').insert({visitor_name:name});
-  if(error){alert('Įrašo išsaugoti nepavyko.');button.disabled=false;button.textContent='Continue';return;}
-  app.innerHTML='<section class="card"><h1>Ačiū!</h1><p>Demonstracija prasidės netrukus.</p></section>';
-  setTimeout(showAlert,Math.max(1,Math.min(300,Number(settings.wait_seconds)||30))*1000);
- });
+
+  try{
+    const {error}=await client
+      .from('visitor_entries')
+      .insert({visitor_name:fullName});
+
+    if(error) throw error;
+
+    app.innerHTML=`
+      <section class="card" style="text-align:center">
+        <div class="mark" style="margin:0 auto 24px">✓</div>
+        <h1>Ačiū!</h1>
+        <p class="sub">Tai mokomoji demonstracija. Tuoj pasirodys įspėjimas.</p>
+        <p class="fine">Įrašas išsaugotas.</p>
+      </section>`;
+
+    const delay=Math.max(
+      1,Math.min(300,Number(settings.wait_seconds)||30)
+    )*1000;
+
+    window.setTimeout(showAlert,delay);
+  }catch(error){
+    console.error(error);
+    busy=false;
+    button.disabled=false;
+    button.textContent='Continue';
+    alert('Nepavyko išsaugoti įrašo. Patikrink Supabase lentelę ir RLS taisykles.');
+  }
 }
-async function showAdmin(){
- const {data:sessionData}=await db.auth.getSession();
- const user=sessionData?.session?.user;
 
- if(!user||user.id!==ADMIN_UID){
-  app.innerHTML=`<section class="card">
-  <h1>Administratoriaus prisijungimas</h1>
-  <form id="login">
-  <label for="email">El. paštas</label>
-  <input id="email" type="email" autocomplete="username" required>
-  <label for="password">Slaptažodis</label>
-  <input id="password" type="password" autocomplete="current-password" required>
-  <button class="wide">Prisijungti</button>
-  </form>
-  <p><a href="?">Grįžti į demonstraciją</a></p></section>`;
-  document.getElementById('login').addEventListener('submit',async e=>{
-   e.preventDefault();
-   const {error}=await db.auth.signInWithPassword({
-    email:document.getElementById('email').value.trim(),
-    password:document.getElementById('password').value
-   });
-   if(error){alert('Prisijungti nepavyko. Patikrink duomenis.');return;}
-   const {data}=await db.auth.getUser();
-   if(data.user?.id!==ADMIN_UID){
-    await db.auth.signOut();
-    alert('Ši paskyra neturi administratoriaus teisių.');
-    return;
-   }
-   await showAdmin();
-  });
-  return;
- }
+function showAlert(){
+  app.innerHTML=`
+    <section class="alert">
+      <p>${escapeHTML(settings.eyebrow)}</p>
+      <div style="font-size:58px;color:#ff343f">▣</div>
+      <h1>${escapeHTML(settings.headline)}</h1>
+      <p>${escapeHTML(settings.detail)}</p>
+      <div class="status">SIMULATED SECURITY ALERT</div>
+      <p>Tai tik demonstracija – tavo įrenginys nebuvo nulaužtas.</p>
+      <button id="again" style="max-width:220px">Bandyti dar kartą</button>
+    </section>`;
 
- const {data:rows,error}=await db.from('visitor_entries')
-  .select('id,visitor_name,created_at')
-  .order('created_at',{ascending:false}).limit(500);
-
- if(error){
-  showError('Nepavyko nuskaityti lankytojų įrašų. Patikrink duomenų bazės RLS taisykles.');
-  return;
- }
- app.style.display='block';
- app.innerHTML=`<div class="admin">
- <header class="head"><div><h1>Cyber Safety Admin</h1>
- <p>Administratoriaus valdymo skydelis</p></div>
- <div><a href="?">Lankytojo puslapis</a>
- <button id="logout">Atsijungti</button></div></header>
- <div class="grid">
- <section class="panel"><h2>Demonstracijos būsena</h2>
- <p id="state">${settings.enabled?'ĮJUNGTA':'IŠJUNGTA'}</p>
- <button id="toggle">Įjungti / išjungti</button></section>
- <section class="panel"><h2>Laukimo laikas</h2>
- <label for="wait">Sekundės (1–300)</label>
- <input id="wait" type="number" min="1" max="300" value="${Number(settings.wait_seconds)}">
- <button id="save-wait">Išsaugoti laiką</button></section>
- <section class="panel"><h2>Įspėjimo tekstas</h2>
- <label for="eyebrow">Viršutinė antraštė</label>
- <input id="eyebrow" maxlength="70" value="${esc(settings.eyebrow)}">
- <label for="headline">Pagrindinis tekstas</label>
- <input id="headline" maxlength="100" value="${esc(settings.headline)}">
- <label for="detail">Papildomas tekstas</label>
- <input id="detail" maxlength="120" value="${esc(settings.detail)}">
- <button id="save-text">Išsaugoti tekstus</button></section>
- <section class="panel" style="grid-column:1/-1">
- <h2>Lankytojų įrašai (${rows.length})</h2>
- <div id="entries">${rows.length?rows.map(r=>`
- <div class="entry"><strong>${esc(r.visitor_name)}</strong>
- <p>${esc(new Date(r.created_at).toLocaleString())}</p>
- <button class="danger" data-delete="${esc(r.id)}">Ištrinti</button></div>
- `).join(''):'<p>Įrašų nėra.</p>'}</div>
- <button class="danger" id="clear">Ištrinti visus įrašus</button>
- </section></div></div>`;
-
- document.getElementById('logout').onclick=async()=>{
-  await db.auth.signOut();await showAdmin();
- };
- document.getElementById('toggle').onclick=async()=>{
-  const {error}=await db.from('demo_settings')
-   .update({enabled:!settings.enabled}).eq('id',1);
-  if(error){alert('Būsenos pakeisti nepavyko.');return;}
-  await loadSettings();await showAdmin();
- };
- document.getElementById('save-wait').onclick=async()=>{
-  const n=Number(document.getElementById('wait').value);
-  if(!Number.isInteger(n)||n<1||n>300){alert('Įvesk skaičių nuo 1 iki 300.');return;}
-  const {error}=await db.from('demo_settings')
-   .update({wait_seconds:n}).eq('id',1);
-  if(error){alert('Laiko išsaugoti nepavyko.');return;}
-  await loadSettings();alert('Laukimo laikas išsaugotas.');await showAdmin();
- };
- document.getElementById('save-text').onclick=async()=>{
-  const values={
-   eyebrow:document.getElementById('eyebrow').value.trim()||defaults.eyebrow,
-   headline:document.getElementById('headline').value.trim()||defaults.headline,
-   detail:document.getElementById('detail').value.trim()||defaults.detail
-  };
-  const {error}=await db.from('demo_settings').update(values).eq('id',1);
-  if(error){alert('Tekstų išsaugoti nepavyko.');return;}
-  await loadSettings();alert('Tekstai išsaugoti.');await showAdmin();
- };
- document.querySelectorAll('[data-delete]').forEach(button=>{
-  button.onclick=async()=>{
-   if(!confirm('Ištrinti šį įrašą?'))return;
-   const {error}=await db.from('visitor_entries')
-    .delete().eq('id',button.dataset.delete);
-   if(error){alert('Įrašo ištrinti nepavyko.');return;}
-   await showAdmin();
-  };
- });
- document.getElementById('clear').onclick=async()=>{
-  if(!confirm('Ištrinti visus lankytojų įrašus?'))return;
-  const {error}=await db.from('visitor_entries').delete().gte('id',0);
-  if(error){alert('Įrašų ištrinti nepavyko. Patikrink lentelės ID tipą ir RLS.');return;}
-  await showAdmin();
- };
+  document.getElementById('again').onclick=()=>location.reload();
 }
-async function init(){
- if(!window.supabase){showError('Nepavyko įkelti Supabase bibliotekos.');return;}
- db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
- await loadSettings();
- if(new URLSearchParams(location.search).get('admin')==='1'){
-  await showAdmin();
- }else{
-  showVisitor();
- }
-}
-init().catch(error=>{
- console.error(error);
- showError('Nepavyko paleisti puslapio. Patikrink Supabase lenteles, ryšį ir RLS taisykles.');
+
+start().catch(error=>{
+  console.error(error);
+  app.innerHTML=`
+    <section class="card">
+      <h1>Ryšio klaida</h1>
+      <p class="sub">Nepavyko įkelti demonstracijos nustatymų. Patikrink interneto ryšį, Supabase lenteles ir RLS taisykles.</p>
+      <button onclick="location.reload()">Bandyti dar kartą</button>
+    </section>`;
 });
 </script>
 </body>
