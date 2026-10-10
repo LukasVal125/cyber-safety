@@ -42,7 +42,7 @@ a{color:#93c5fd}
       <button id="login-button">Prisijungti</button>
     </form>
     <p id="login-message" role="status"></p>
-    <small>Prisijungti gali tik Supabase Auth paskyra, kuriai suteiktos administratoriaus teisės.</small>
+    <small>Prisijungti gali tik administratoriaus paskyra.</small>
   </section>
 
   <section id="dashboard" hidden>
@@ -79,6 +79,25 @@ a{color:#93c5fd}
     </section>
 
     <section class="panel">
+      <h2>Keisti administratoriaus slaptažodį</h2>
+      <p>Įvesk naują slaptažodį ir pakartok jį patvirtinimui.</p>
+      <form id="change-password-form">
+        <label for="new-password">Naujas slaptažodis</label>
+        <input id="new-password" type="password"
+          autocomplete="new-password" minlength="10"
+          placeholder="Mažiausiai 10 simbolių" required>
+        <label for="confirm-password">Pakartok naują slaptažodį</label>
+        <input id="confirm-password" type="password"
+          autocomplete="new-password" minlength="10"
+          placeholder="Įvesk slaptažodį dar kartą" required>
+        <button id="change-password-button" type="submit">
+          Pakeisti slaptažodį
+        </button>
+        <p id="password-message" role="status"></p>
+      </form>
+    </section>
+
+    <section class="panel">
       <h2>Lankytojų įrašai</h2>
       <p id="count"></p>
       <div id="entries"></div>
@@ -88,11 +107,12 @@ a{color:#93c5fd}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = 'https://wupmkjuttnjxszkejviz.supabase.co';
+const SUPABASE_URL = 'https://wupmkjuttnjsxzkejviz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_fJwyIIamC8-w_kM-LEPzKg_cAxPiy2X';
 const ADMIN_UID = 'fa9fb1f4-9380-4a10-b354-dde6795a3f2a';
 
 const $ = id => document.getElementById(id);
+
 const defaults = {
   id: 1,
   enabled: true,
@@ -116,6 +136,11 @@ function loginMessage(text, error = false) {
   $('login-message').className = error ? 'error' : 'status';
 }
 
+function passwordMessage(text, error = false) {
+  $('password-message').textContent = text;
+  $('password-message').className = error ? 'error' : 'status';
+}
+
 function showLogin() {
   $('login-panel').hidden = false;
   $('dashboard').hidden = true;
@@ -128,12 +153,14 @@ function showDashboard() {
 
 async function verifyAdmin() {
   const {data, error} = await client.auth.getUser();
+
   if (error || data.user?.id !== ADMIN_UID) {
     await client.auth.signOut();
     showLogin();
     loginMessage('Ši paskyra neturi administratoriaus teisių.', true);
     return false;
   }
+
   return true;
 }
 
@@ -150,6 +177,7 @@ async function loadData() {
     message('Nustatymų nuskaityti nepavyko: ' + configError.message, true);
     return;
   }
+
   if (!config) {
     message('Nerasta demo_settings eilutė su id = 1.', true);
     return;
@@ -214,6 +242,7 @@ function renderEntries() {
 
 async function saveSettings(values, successText) {
   message('Saugoma…');
+
   const {error} = await client
     .from('demo_settings')
     .update(values)
@@ -272,6 +301,53 @@ $('login-form').addEventListener('submit', async event => {
   }
 });
 
+$('change-password-form').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const newPassword = $('new-password').value;
+  const confirmPassword = $('confirm-password').value;
+  const button = $('change-password-button');
+
+  if (newPassword.length < 10) {
+    passwordMessage('Slaptažodis turi būti bent 10 simbolių.', true);
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    passwordMessage('Slaptažodžiai nesutampa.', true);
+    return;
+  }
+
+  button.disabled = true;
+  passwordMessage('Keičiamas slaptažodis…');
+
+  try {
+    if (!(await verifyAdmin())) return;
+
+    const {data, error} = await client.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      passwordMessage('Pakeisti nepavyko: ' + error.message, true);
+      return;
+    }
+
+    if (data.user?.id !== ADMIN_UID) {
+      passwordMessage('Nepavyko patvirtinti administratoriaus paskyros.', true);
+      return;
+    }
+
+    $('new-password').value = '';
+    $('confirm-password').value = '';
+    passwordMessage('Slaptažodis sėkmingai pakeistas.');
+  } catch (error) {
+    passwordMessage('Klaida: ' + error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
 $('toggle').addEventListener('click', async () => {
   await saveSettings(
     {enabled: !settings.enabled},
@@ -281,10 +357,12 @@ $('toggle').addEventListener('click', async () => {
 
 $('save-wait').addEventListener('click', async () => {
   const value = Number($('wait').value);
+
   if (!Number.isInteger(value) || value < 1 || value > 300) {
     message('Įvesk sveiką skaičių nuo 1 iki 300.', true);
     return;
   }
+
   await saveSettings({wait_seconds: value}, 'Laukimo laikas išsaugotas.');
 });
 
@@ -314,6 +392,7 @@ async function start() {
   client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const {data} = await client.auth.getSession();
+
   if (data.session && await verifyAdmin()) {
     showDashboard();
     await loadData();
