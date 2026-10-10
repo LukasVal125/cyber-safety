@@ -3,18 +3,22 @@
 <html lang="lt">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cyber Safety Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Cyber Safety</title>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
       min-height: 100vh;
       padding: 20px;
-      display: grid;
-      place-items: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       font-family: Arial, sans-serif;
       background: #0b1120;
       color: #f1f5f9;
@@ -27,8 +31,215 @@
       background: #151e30;
       border: 1px solid #334155;
       border-radius: 18px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
     }
 
-    h1 { margin-top: 0; }
+    h1 {
+      margin-top: 0;
+      text-align: center;
+    }
 
+    p {
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    label {
+      display: block;
+      margin: 18px 0 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      background: #0b1120;
+      color: white;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #3b82f6;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .warning {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background: #050505;
+    }
+
+    .warning.show {
+      display: flex;
+    }
+
+    .warning-box {
+      width: 100%;
+      max-width: 520px;
+      padding: 35px 25px;
+      text-align: center;
+      background: #151515;
+      border: 2px solid #ef4444;
+      border-radius: 16px;
+      box-shadow: 0 0 35px rgba(239, 68, 68, 0.25);
+      animation: appear 0.35s ease-out;
+    }
+
+    .warning-icon {
+      margin-bottom: 15px;
+      color: #ef4444;
+      font-size: 58px;
+    }
+
+    .warning-box h2 {
+      margin: 0 0 18px;
+      color: #ef4444;
+      font-size: clamp(30px, 7vw, 44px);
+      overflow-wrap: anywhere;
+    }
+
+    .warning-box p {
+      color: #d1d5db;
+    }
+
+    .warning-box button {
+      background: #b91c1c;
+    }
+
+    .warning-box button:hover {
+      background: #991b1b;
+    }
+
+    @keyframes appear {
+      from {
+        opacity: 0;
+        transform: scale(0.92);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .warning-box {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="card" id="main-card">
+    <h1>Cyber Safety</h1>
+
+    <p>
+      Įvesk savo vardą ir pavardę, kad galėtum tęsti.
+    </p>
+
+    <form id="visitor-form">
+      <label for="first">Vardas</label>
+      <input
+        type="text"
+        id="first"
+        maxlength="60"
+        autocomplete="given-name"
+        required
+      >
+
+      <label for="last">Pavardė</label>
+      <input
+        type="text"
+        id="last"
+        maxlength="60"
+        autocomplete="family-name"
+        required
+      >
+
+      <button type="submit">Tęsti</button>
+    </form>
+  </main>
+
+  <section
+    class="warning"
+    id="warning"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="warning-title"
+    aria-hidden="true"
+  >
+    <div class="warning-box">
+      <div class="warning-icon" aria-hidden="true">⚠</div>
+
+      <h2 id="warning-title">You Was Hacked</h2>
+
+      <p>Security breach detected.</p>
+
+      <button type="button" id="close-button">
+        Supratau
+      </button>
+    </div>
+  </section>
+
+  <script>
+    const form = document.getElementById("visitor-form");
+    const mainCard = document.getElementById("main-card");
+    const warning = document.getElementById("warning");
+    const closeButton = document.getElementById("close-button");
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      mainCard.style.display = "none";
+
+      warning.classList.add("show");
+      warning.setAttribute("aria-hidden", "false");
+
+      closeButton.focus();
+    });
+
+    closeButton.addEventListener("click", function() {
+      warning.classList.remove("show");
+      warning.setAttribute("aria-hidden", "true");
+
+      mainCard.style.display = "block";
+      form.reset();
+
+      document.getElementById("first").focus();
+    });
+  </script>
+
+</body>
+</html>
 ```
